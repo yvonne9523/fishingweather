@@ -61,7 +61,7 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">2. 選擇對應觀測點 (地名)</label>
                 <select id="locationSelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
-                    <!-- 由 JavaScript 靜態資料或動態生成 -->
+                    <!-- 由 JavaScript 動態生成 -->
                 </select>
             </div>
         </div>
@@ -113,106 +113,55 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 預先內建的全台對應靜態資料（確保即使 API 斷線或被 CORS 阻擋，下拉選單依然完美呈現！）
+        // 精準對齊氣象署最新的潮汐站點名稱 (完全消除名稱不合的問題)
         const STATION_MAPPING = {
-            "基隆市": [
-                { name: "基隆", weatherStation: "基隆", tideLocation: "基隆" }
-            ],
+            "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆港" }],
             "新北市": [
                 { name: "淡水", weatherStation: "淡水", tideLocation: "淡水" },
                 { name: "龍洞", weatherStation: "龍洞", tideLocation: "龍洞" },
                 { name: "福隆", weatherStation: "福隆", tideLocation: "福隆" },
                 { name: "板橋", weatherStation: "板橋", tideLocation: null }
             ],
-            "臺北市": [
-                { name: "臺北", weatherStation: "臺北", tideLocation: null },
-                { name: "鞍部", weatherStation: "鞍部", tideLocation: null },
-                { name: "大屯山", weatherStation: "大屯山", tideLocation: null }
-            ],
+            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
             "桃園市": [
-                { name: "永安", weatherStation: "永安", tideLocation: "竹圍" },
-                { name: "新屋", weatherStation: "新屋", tideLocation: "竹圍" },
-                { name: "大園", weatherStation: "大園", tideLocation: "竹圍" }
+                { name: "新屋", weatherStation: "新屋", tideLocation: "桃園永安" },
+                { name: "大園", weatherStation: "大園", tideLocation: "竹圍港" }
             ],
-            "新竹市": [
-                { name: "新竹", weatherStation: "新竹", tideLocation: "新竹" }
-            ],
-            "新竹縣": [
-                { name: "新埔", weatherStation: "新埔", tideLocation: "新竹" },
-                { name: "竹東", weatherStation: "竹東", tideLocation: "新竹" }
-            ],
-            "苗栗縣": [
-                { name: "後龍", weatherStation: "後龍", tideLocation: "通霄" },
-                { name: "三義", weatherStation: "三義", tideLocation: null }
-            ],
-            "臺中市": [
-                { name: "臺中港", weatherStation: "臺中港", tideLocation: "臺中港" },
-                { name: "臺中", weatherStation: "臺中", tideLocation: null }
-            ],
-            "彰化縣": [
-                { name: "鹿港", weatherStation: "鹿港", tideLocation: "溫仔" },
-                { name: "彰化", weatherStation: "彰化", tideLocation: null }
-            ],
-            "南投縣": [
-                { name: "日月潭", weatherStation: "日月潭", tideLocation: null },
-                { name: "埔里", weatherStation: "埔里", tideLocation: null }
-            ],
-            "雲林縣": [
-                { name: "麥寮", weatherStation: "麥寮", tideLocation: "台西" },
-                { name: "台西", weatherStation: "台西", tideLocation: "台西" }
-            ],
-            "嘉義縣": [
-                { name: "東石", weatherStation: "東石", tideLocation: "東石" },
-                { name: "阿里山", weatherStation: "阿里山", tideLocation: null }
-            ],
-            "嘉義市": [
-                { name: "嘉義", weatherStation: "嘉義", tideLocation: null }
-            ],
-            "臺南市": [
-                { name: "安平", weatherStation: "安平", tideLocation: "安平" },
-                { name: "臺南", weatherStation: "臺南", tideLocation: "安平" }
-            ],
-            "高雄市": [
-                { name: "高雄港", weatherStation: "高雄", tideLocation: "高雄" },
-                { name: "旗津", weatherStation: "旗津", tideLocation: "高雄" }
-            ],
+            "新竹市": [{ name: "新竹", weatherStation: "新竹", tideLocation: "新竹" }],
+            "新竹縣": [{ name: "竹東", weatherStation: "竹東", tideLocation: "新竹" }],
+            "苗栗縣": [{ name: "後龍", weatherStation: "後龍", tideLocation: "苗栗通霄" }],
+            "臺中市": [{ name: "臺中港", weatherStation: "臺中港", tideLocation: "臺中港" }],
+            "彰化縣": [{ name: "鹿港", weatherStation: "鹿港", tideLocation: "彰化溫仔" }],
+            "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
+            "雲林縣": [{ name: "台西", weatherStation: "台西", tideLocation: "雲林台西" }],
+            "嘉義縣": [{ name: "東石", weatherStation: "東石", tideLocation: "嘉義東石" }],
+            "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }],
+            "臺南市": [{ name: "安平", weatherStation: "安平", tideLocation: "安平港" }],
+            "高雄市": [{ name: "高雄", weatherStation: "高雄", tideLocation: "高雄港" }],
             "屏東縣": [
-                { name: "恆春", weatherStation: "恆春", tideLocation: "後壁湖" },
+                { name: "恆春", weatherStation: "恆春", tideLocation: "後壁湖漁港" },
                 { name: "小琉球", weatherStation: "琉球", tideLocation: "琉球" },
-                { name: "墾丁", weatherStation: "墾丁", tideLocation: "後壁湖" },
                 { name: "東港", weatherStation: "東港", tideLocation: "東港" }
             ],
             "宜蘭縣": [
-                { name: "蘇澳港", weatherStation: "蘇澳", tideLocation: "蘇澳" },
-                { name: "頭城", weatherStation: "頭城", tideLocation: "烏石" },
-                { name: "宜蘭", weatherStation: "宜蘭", tideLocation: null }
+                { name: "蘇澳", weatherStation: "蘇澳", tideLocation: "蘇澳港" },
+                { name: "頭城", weatherStation: "頭城", tideLocation: "烏石漁港" }
             ],
-            "花蓮縣": [
-                { name: "花蓮港", weatherStation: "花蓮", tideLocation: "花蓮" },
-                { name: "太魯閣", weatherStation: "太魯閣", tideLocation: null }
-            ],
+            "花蓮縣": [{ name: "花蓮", weatherStation: "花蓮", tideLocation: "花蓮港" }],
             "臺東縣": [
-                { name: "臺東港", weatherStation: "臺東", tideLocation: "臺東" },
-                { name: "成功", weatherStation: "成功", tideLocation: "成功" },
+                { name: "臺東", weatherStation: "臺東", tideLocation: "臺東港" },
+                { name: "成功", weatherStation: "成功", tideLocation: "成功港" },
                 { name: "綠島", weatherStation: "綠島", tideLocation: "綠島" },
                 { name: "蘭嶼", weatherStation: "蘭嶼", tideLocation: "蘭嶼" }
             ],
             "澎湖縣": [
                 { name: "馬公", weatherStation: "澎湖", tideLocation: "馬公" },
-                { name: "吉貝", weatherStation: "吉貝", tideLocation: "吉貝" },
-                { name: "東吉島", weatherStation: "東吉島", tideLocation: "東吉" }
+                { name: "吉貝", weatherStation: "吉貝", tideLocation: "吉貝" }
             ],
-            "金門縣": [
-                { name: "金門", weatherStation: "金門", tideLocation: "金門" },
-                { name: "九宮碼頭", weatherStation: "九宮碼頭", tideLocation: "金門" }
-            ],
-            "連江縣": [
-                { name: "馬祖", weatherStation: "馬祖", tideLocation: "福澳" },
-                { name: "東引", weatherStation: "東引", tideLocation: "東引" }
-            ]
+            "金門縣": [{ name: "金門", weatherStation: "金門", tideLocation: "金門" }],
+            "連江縣": [{ name: "馬祖", weatherStation: "馬祖", tideLocation: "福澳港" }]
         };
 
-        // DOM 元素定義
         const countySelect = document.getElementById('countySelect');
         const locationSelect = document.getElementById('locationSelect');
         const loadingEl = document.getElementById('loading');
@@ -220,17 +169,14 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const tideSection = document.getElementById('tideSection');
 
-        // 全域變數，紀錄 API 資料
         let rawWeatherData = null;
         let rawTideData = null;
 
-        // 初始化
         window.addEventListener('DOMContentLoaded', initializeApp);
         countySelect.addEventListener('change', handleCountyChange);
         locationSelect.addEventListener('change', handleLocationChange);
         refreshBtn.addEventListener('click', forceRefresh);
 
-        // 初始化 App：嘗試取得 API 資料，失敗亦可正常展示介面
         async function initializeApp() {
             if (API_KEY === 'YOUR_API_KEY_HERE' || !API_KEY) {
                 alert('請先在 index.html 檔案中填入您的中央氣象署 API 授權碼！');
@@ -240,36 +186,28 @@
             showLoading(true);
             
             try {
-                // 同步取得天氣與潮汐
                 const [weatherRes, tideRes] = await Promise.all([
                     fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${API_KEY}`),
                     fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}`)
                 ]);
 
                 const weatherJson = await weatherRes.json();
-                if (weatherJson.success === "true") {
-                    rawWeatherData = weatherJson.records.Station;
-                }
+                if (weatherJson.success === "true") rawWeatherData = weatherJson.records.Station;
 
                 const tideJson = await tideRes.json();
-                if (tideJson.success === "true") {
-                    rawTideData = tideJson.records.TideForecasts.Location;
-                }
+                if (tideJson.success === "true") rawTideData = tideJson.records.TideForecasts.Location;
 
             } catch (error) {
-                console.warn('⚠️ 偵測到本機 file:// 環境或網路不通，將啟用離線靜態選單！');
+                console.warn('API 讀取錯誤', error);
             }
 
-            // 無論 API 成功與否，立刻渲染預設縣市的選單
             handleCountyChange();
             showLoading(false);
         }
 
-        // 當縣市改變時：讀取 STATION_MAPPING 靜態清單更新第二層
         function handleCountyChange() {
             const selectedCounty = countySelect.value;
             locationSelect.innerHTML = '';
-
             const list = STATION_MAPPING[selectedCounty] || [];
 
             if (list.length > 0) {
@@ -277,8 +215,6 @@
                     const opt = document.createElement('option');
                     opt.value = item.name;
                     opt.innerText = `${item.name} ${item.tideLocation ? '🌊' : '☀️'}`;
-                    
-                    // 將對應的測站屬性存在 dataset 中
                     opt.dataset.weatherStation = item.weatherStation;
                     opt.dataset.tideLocation = item.tideLocation || '';
                     locationSelect.appendChild(opt);
@@ -291,7 +227,6 @@
             }
         }
 
-        // 當第二層地點改變時：渲染對應的天氣與潮汐
         function handleLocationChange() {
             const selectedOpt = locationSelect.selectedOptions[0];
             if (!selectedOpt) return;
@@ -304,29 +239,29 @@
                 const matchedWeather = rawWeatherData.find(st => st.StationName === targetWeather);
                 renderWeather(matchedWeather, targetWeather);
             } else {
-                // API 失敗（本機執行）時的預設骨架
                 renderWeather(null, targetWeather);
             }
 
-            // 2. 渲染潮汐
+            // 2. 渲染潮汐 (改用寬鬆比對：包含或被包含都算成功)
             if (targetTide) {
                 tideSection.classList.remove('hidden');
                 if (rawTideData) {
-                    const matchedTide = rawTideData.find(loc => loc.LocationName === targetTide);
+                    const matchedTide = rawTideData.find(loc => 
+                        loc.LocationName.includes(targetTide) || targetTide.includes(loc.LocationName)
+                    );
                     if (matchedTide) {
                         renderTide(matchedTide.TideTimeDailyForecast);
                     } else {
-                        renderTidePlaceholder("目前無即時潮汐預報");
+                        renderTidePlaceholder(`未找到 [${targetTide}] 潮汐測站資料`);
                     }
                 } else {
-                    renderTidePlaceholder("請將網頁部署上線以取得即時潮汐資料");
+                    renderTidePlaceholder("無法取得即時潮汐資料");
                 }
             } else {
                 tideSection.classList.add('hidden');
             }
         }
 
-        // 渲染天氣 HTML
         function renderWeather(station, fallbackName) {
             if (station) {
                 const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
@@ -337,14 +272,13 @@
                 document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
             } else {
                 document.getElementById('weatherStation').innerText = `${countySelect.value} (${fallbackName})`;
-                document.getElementById('weatherTime').innerText = `⚠️ 點擊兩次本地開啟被瀏覽器阻擋`;
+                document.getElementById('weatherTime').innerText = `暫無即時天氣數據`;
                 document.getElementById('temp').innerText = '--';
                 document.getElementById('windSpeed').innerText = '-- m/s';
                 document.getElementById('humidity').innerText = '-- %';
             }
         }
 
-        // 渲染潮汐 HTML
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
@@ -420,18 +354,16 @@
             });
         }
 
-        // 潮汐無資料或 API 被擋時的提示
+        // 修改後的提示文字：如果看見 [ ] 內有字，代表這已經是新版程式碼
         function renderTidePlaceholder(message) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = `
-                <div class="text-center py-8 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100 p-4 leading-relaxed">
-                    📍 ${message}<br>
-                    <span class="text-xs opacity-70 mt-1 block">（請將此網頁部署至 GitHub Pages、Vercel 等線上伺服器，即能正常獲取即時數據！）</span>
+                <div class="text-center py-6 text-slate-400 text-sm bg-white rounded-2xl border border-slate-100 p-4 font-medium">
+                    🔍 ${message}
                 </div>
             `;
         }
 
-        // 強制刷新資料
         function forceRefresh() {
             rawWeatherData = null;
             rawTideData = null;
