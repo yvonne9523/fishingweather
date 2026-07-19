@@ -24,16 +24,13 @@
                     <option value="桃園市">桃園市</option>
                     <option value="新北市">新北市</option>
                     <option value="基隆市">基隆市</option>
-                    <option value="臺北市">臺北市 (無潮汐)</option>
+                    <option value="苗栗縣">苗栗縣</option>
                     <option value="新竹市">新竹市</option>
                     <option value="新竹縣">新竹縣</option>
-                    <option value="苗栗縣">苗栗縣</option>
                     <option value="臺中市">臺中市</option>
                     <option value="彰化縣">彰化縣</option>
-                    <option value="南投縣">南投縣 (無潮汐)</option>
                     <option value="雲林縣">雲林縣</option>
                     <option value="嘉義縣">嘉義縣</option>
-                    <option value="嘉義市">嘉義市 (無潮汐)</option>
                     <option value="臺南市">臺南市</option>
                     <option value="高雄市">高雄市</option>
                     <option value="屏東縣">屏東縣</option>
@@ -43,6 +40,9 @@
                     <option value="澎湖縣">澎湖縣</option>
                     <option value="金門縣">金門縣</option>
                     <option value="連江縣">連江縣</option>
+                    <option value="臺北市">臺北市 (無潮汐)</option>
+                    <option value="南投縣">南投縣 (無潮汐)</option>
+                    <option value="嘉義市">嘉義市 (無潮汐)</option>
                 </select>
             </div>
 
@@ -93,52 +93,159 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
+        // 精準補齊對照文件之全台對應表
         const STATION_MAPPING = {
             "桃園市": [
-                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
-                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
+                { name: "新屋區 (永安漁港)", weatherStation: "新屋", tideLocation: "桃園市新屋區" },
+                { name: "大園區 (竹圍漁港)", weatherStation: "大園", tideLocation: "桃園市大園區" },
+                { name: "觀音區", weatherStation: "大園", tideLocation: "桃園市觀音區" },
+                { name: "蘆竹區", weatherStation: "大園", tideLocation: "桃園市蘆竹區" }
             ],
             "新北市": [
-                { name: "龍洞", weatherStation: "鼻頭角", tideLocation: "龍洞" },
-                { name: "淡水", weatherStation: "淡水", tideLocation: "淡水" },
-                { name: "福隆", weatherStation: "福隆", tideLocation: "福隆" },
-                { name: "板橋", weatherStation: "板橋", tideLocation: null }
+                { name: "龍洞 (潛點水域)", weatherStation: "鼻頭角", tideLocation: "潛點龍洞灣水域B區北側" },
+                { name: "淡水區 (漁港)", weatherStation: "淡水", tideLocation: "新北市淡水區" },
+                { name: "福隆 (海水浴場)", weatherStation: "福隆", tideLocation: "海水浴場福隆" },
+                { name: "貢寮區", weatherStation: "福隆", tideLocation: "新北市貢寮區" },
+                { name: "瑞芳區", weatherStation: "鼻頭角", tideLocation: "新北市瑞芳區" },
+                { name: "萬里區", weatherStation: "金山", tideLocation: "新北市萬里區" },
+                { name: "金山區", weatherStation: "金山", tideLocation: "新北市金山區" },
+                { name: "石門區", weatherStation: "三芝", tideLocation: "新北市石門區" },
+                { name: "三芝區", weatherStation: "三芝", tideLocation: "新北市三芝區" },
+                { name: "八里區", weatherStation: "淡水", tideLocation: "新北市八里區" },
+                { name: "林口區", weatherStation: "淡水", tideLocation: "新北市林口區" },
+                { name: "板橋區 (無潮汐)", weatherStation: "板橋", tideLocation: null }
             ],
-            "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆港" }],
-            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
-            "新竹市": [{ name: "新竹", weatherStation: "新竹", tideLocation: "新竹" }],
-            "新竹縣": [{ name: "竹東", weatherStation: "竹東", tideLocation: "新竹" }],
-            "苗栗縣": [{ name: "後龍 (通霄)", weatherStation: "後龍", tideLocation: "苗栗通霄" }],
-            "臺中市": [{ name: "臺中港", weatherStation: "臺中港", tideLocation: "臺中港" }],
-            "彰化縣": [{ name: "鹿港 (溫仔)", weatherStation: "鹿港", tideLocation: "彰化溫仔" }],
-            "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
-            "雲林縣": [{ name: "台西", weatherStation: "台西", tideLocation: "雲林台西" }],
-            "嘉義縣": [{ name: "東石", weatherStation: "東石", tideLocation: "嘉義東石" }],
-            "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }],
-            "臺南市": [{ name: "安平港", weatherStation: "安平", tideLocation: "安平港" }],
-            "高雄市": [{ name: "高雄港", weatherStation: "高雄", tideLocation: "高雄港" }],
+            "基隆市": [
+                { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區" },
+                { name: "基隆市中山區", weatherStation: "基隆", tideLocation: "基隆市中山區" },
+                { name: "基隆市安樂區", weatherStation: "基隆", tideLocation: "基隆市安樂區" }
+            ],
+            "苗栗縣": [
+                { name: "通霄鎮 (海水浴場)", weatherStation: "後龍", tideLocation: "海水浴場通霄" },
+                { name: "竹南鎮 (海水浴場崎頂)", weatherStation: "後龍", tideLocation: "海水浴場崎頂" },
+                { name: "後龍鎮", weatherStation: "後龍", tideLocation: "苗栗縣後龍鎮" },
+                { name: "苑裡鎮", weatherStation: "後龍", tideLocation: "苗栗縣苑裡鎮" }
+            ],
+            "新竹市": [
+                { name: "新竹市北區", weatherStation: "新竹", tideLocation: "新竹市北區" },
+                { name: "新竹市香山區", weatherStation: "新竹", tideLocation: "新竹市香山區" }
+            ],
+            "新竹縣": [
+                { name: "新豐鄉", weatherStation: "新竹", tideLocation: "新竹縣新豐鄉" },
+                { name: "竹北市", weatherStation: "新竹", tideLocation: "新竹縣竹北市" }
+            ],
+            "臺中市": [
+                { name: "大甲區", weatherStation: "臺中港", tideLocation: "臺中市大甲區" },
+                { name: "大安區 (海水浴場)", weatherStation: "臺中港", tideLocation: "海水浴場大安" },
+                { name: "清水區", weatherStation: "臺中港", tideLocation: "臺中市清水區" },
+                { name: "梧棲區 (漁港)", weatherStation: "臺中港", tideLocation: "漁港梧棲" },
+                { name: "龍井區", weatherStation: "臺中港", tideLocation: "臺中市龍井區" }
+            ],
+            "彰化縣": [
+                { name: "鹿港鎮", weatherStation: "鹿港", tideLocation: "彰化縣鹿港鎮" },
+                { name: "伸港鄉", weatherStation: "鹿港", tideLocation: "彰化縣伸港鄉" },
+                { name: "線西鄉", weatherStation: "鹿港", tideLocation: "彰化縣線西鄉" },
+                { name: "福興鄉", weatherStation: "鹿港", tideLocation: "彰化縣福興鄉" },
+                { name: "芳苑鄉", weatherStation: "鹿港", tideLocation: "彰化縣芳苑鄉" },
+                { name: "大城鄉", weatherStation: "鹿港", tideLocation: "彰化縣大城鄉" }
+            ],
+            "雲林縣": [
+                { name: "臺西鄉", weatherStation: "台西", tideLocation: "雲林縣臺西鄉" },
+                { name: "麥寮鄉", weatherStation: "台西", tideLocation: "雲林縣麥寮鄉" },
+                { name: "四湖鄉", weatherStation: "台西", tideLocation: "雲林縣四湖鄉" },
+                { name: "口湖鄉", weatherStation: "台西", tideLocation: "雲林縣口湖鄉" }
+            ],
+            "嘉義縣": [
+                { name: "東石鄉 (漁港)", weatherStation: "東石", tideLocation: "漁港東石" },
+                { name: "布袋鎮 (商港)", weatherStation: "東石", tideLocation: "海釣布袋商港釣魚示範區" }
+            ],
+            "臺南市": [
+                { name: "安平區 (漁港)", weatherStation: "安平", tideLocation: "漁港安平" },
+                { name: "北門區", weatherStation: "安平", tideLocation: "臺南市北門區" },
+                { name: "將軍區", weatherStation: "安平", tideLocation: "漁港將軍" },
+                { name: "七股區", weatherStation: "安平", tideLocation: "臺南市七股區" },
+                { name: "安南區", weatherStation: "安平", tideLocation: "臺南市安南區" },
+                { name: "南區", weatherStation: "安平", tideLocation: "臺南市南區" }
+            ],
+            "高雄市": [
+                { name: "西子灣 (海水浴場)", weatherStation: "高雄", tideLocation: "海水浴場西子灣" },
+                { name: "旗津區 (海岸公園)", weatherStation: "高雄", tideLocation: "海水浴場旗津海岸公園" },
+                { name: "梓官區 (蚵仔寮漁港)", weatherStation: "高雄", tideLocation: "漁港蚵仔寮" },
+                { name: "彌陀區", weatherStation: "高雄", tideLocation: "高雄市彌陀區" },
+                { name: "永安區", weatherStation: "高雄", tideLocation: "高雄市永安區" },
+                { name: "茄萣區", weatherStation: "高雄", tideLocation: "高雄市茄萣區" },
+                { name: "楠梓區", weatherStation: "高雄", tideLocation: "高雄市楠梓區" },
+                { name: "左營區", weatherStation: "高雄", tideLocation: "高雄市左營區" },
+                { name: "鼓山區", weatherStation: "高雄", tideLocation: "高雄市鼓山區" },
+                { name: "前鎮區", weatherStation: "高雄", tideLocation: "高雄市前鎮區" },
+                { name: "小港區", weatherStation: "高雄", tideLocation: "高雄市小港區" },
+                { name: "林園區", weatherStation: "高雄", tideLocation: "高雄市林園區" }
+            ],
             "屏東縣": [
-                { name: "恆春 (後壁湖)", weatherStation: "恆春", tideLocation: "後壁湖漁港" },
-                { name: "小琉球", weatherStation: "琉球", tideLocation: "琉球" },
-                { name: "東港", weatherStation: "東港", tideLocation: "東港" }
+                { name: "恆春鎮 (後壁湖漁港)", weatherStation: "恆春", tideLocation: "漁港後壁湖" },
+                { name: "東港鎮", weatherStation: "東港", tideLocation: "屏東縣東港鎮" },
+                { name: "琉球鄉 (小琉球)", weatherStation: "琉球", tideLocation: "屏東縣琉球鄉" },
+                { name: "新園鄉", weatherStation: "東港", tideLocation: "屏東縣新園鄉" },
+                { name: "林邊鄉", weatherStation: "東港", tideLocation: "屏東縣林邊鄉" },
+                { name: "佳冬鄉", weatherStation: "恆春", tideLocation: "屏東縣佳冬鄉" },
+                { name: "枋寮鄉", weatherStation: "恆春", tideLocation: "屏東縣枋寮鄉" },
+                { name: "枋山鄉", weatherStation: "恆春", tideLocation: "屏東縣枋山鄉" },
+                { name: "車城鄉", weatherStation: "恆春", tideLocation: "屏東縣車城鄉" },
+                { name: "滿州鄉", weatherStation: "恆春", tideLocation: "屏東縣滿州鄉" },
+                { name: "牡丹鄉", weatherStation: "恆春", tideLocation: "屏東縣牡丹鄉" }
             ],
             "宜蘭縣": [
-                { name: "蘇澳港", weatherStation: "蘇澳", tideLocation: "蘇澳港" },
-                { name: "頭城 (烏石港)", weatherStation: "頭城", tideLocation: "烏石漁港" }
+                { name: "蘇澳鎮 (豆腐岬)", weatherStation: "蘇澳", tideLocation: "潛點豆腐岬水域" },
+                { name: "頭城鎮 (烏石漁港)", weatherStation: "頭城", tideLocation: "漁港烏石" },
+                { name: "南澳鄉", weatherStation: "蘇澳", tideLocation: "宜蘭縣南澳鄉" },
+                { name: "五結鄉", weatherStation: "蘇澳", tideLocation: "宜蘭縣五結鄉" },
+                { name: "壯圍鄉", weatherStation: "頭城", tideLocation: "宜蘭縣壯圍鄉" }
             ],
-            "花蓮縣": [{ name: "花蓮港", weatherStation: "花蓮", tideLocation: "花蓮港" }],
+            "花蓮縣": [
+                { name: "花蓮市 (漁港)", weatherStation: "花蓮", tideLocation: "漁港花蓮" },
+                { name: "吉安鄉", weatherStation: "花蓮", tideLocation: "花蓮縣吉安鄉" },
+                { name: "新城鄉", weatherStation: "花蓮", tideLocation: "花蓮縣新城鄉" },
+                { name: "秀林鄉", weatherStation: "花蓮", tideLocation: "花蓮縣秀林鄉" },
+                { name: "壽豐鄉", weatherStation: "花蓮", tideLocation: "花蓮縣壽豐鄉" },
+                { name: "豐濱鄉 (石梯漁港)", weatherStation: "花蓮", tideLocation: "漁港石梯" }
+            ],
             "臺東縣": [
-                { name: "臺東港", weatherStation: "臺東", tideLocation: "臺東港" },
-                { name: "成功", weatherStation: "成功", tideLocation: "成功港" },
-                { name: "綠島", weatherStation: "綠島", tideLocation: "綠島" },
-                { name: "蘭嶼", weatherStation: "蘭嶼", tideLocation: "蘭嶼" }
+                { name: "臺東市 (伽藍漁港)", weatherStation: "臺東", tideLocation: "漁港伽藍" },
+                { name: "成功鎮 (港口)", weatherStation: "成功", tideLocation: "臺東縣成功鎮" },
+                { name: "綠島鄉", weatherStation: "綠島", tideLocation: "臺東縣綠島鄉" },
+                { name: "蘭嶼鄉", weatherStation: "蘭嶼", tideLocation: "臺東縣蘭嶼鄉" },
+                { name: "達仁鄉", weatherStation: "臺東", tideLocation: "臺東縣達仁鄉" },
+                { name: "大武鄉", weatherStation: "臺東", tideLocation: "臺東縣大武鄉" },
+                { name: "太麻里鄉", weatherStation: "臺東", tideLocation: "臺東縣太麻里鄉" },
+                { name: "卑南鄉", weatherStation: "臺東", tideLocation: "臺東縣卑南鄉" },
+                { name: "東河鄉", weatherStation: "成功", tideLocation: "臺東縣東河鄉" },
+                { name: "長濱鄉", weatherStation: "成功", tideLocation: "臺東縣長濱鄉" }
             ],
             "澎湖縣": [
-                { name: "馬公", weatherStation: "澎湖", tideLocation: "馬公" },
-                { name: "吉貝", weatherStation: "吉貝", tideLocation: "吉貝" }
+                { name: "馬公市 (漁港)", weatherStation: "澎湖", tideLocation: "漁港馬公" },
+                { name: "湖西鄉 (沙港東)", weatherStation: "澎湖", tideLocation: "漁港沙港東" },
+                { name: "白沙鄉 (吉貝海園)", weatherStation: "吉貝", tideLocation: "海水浴場吉貝海園" },
+                { name: "西嶼鄉", weatherStation: "澎湖", tideLocation: "澎湖縣西嶼鄉" },
+                { name: "望安鄉", weatherStation: "澎湖", tideLocation: "澎湖縣望安鄉" },
+                { name: "七美鄉", weatherStation: "澎湖", tideLocation: "澎湖縣七美鄉" }
             ],
-            "金門縣": [{ name: "金門", weatherStation: "金門", tideLocation: "金門" }],
-            "連江縣": [{ name: "馬祖", weatherStation: "馬祖", tideLocation: "福澳港" }]
+            "金門縣": [
+                { name: "金寧鄉", weatherStation: "金門", tideLocation: "金門縣金寧鄉" },
+                { name: "烈嶼鄉", weatherStation: "金門", tideLocation: "金門縣烈嶼鄉" },
+                { name: "烏坵鄉", weatherStation: "金門", tideLocation: "金門縣烏坵鄉" },
+                { name: "金沙鎮", weatherStation: "金門", tideLocation: "金門縣金沙鎮" },
+                { name: "金城鎮 (僅天氣)", weatherStation: "金門", tideLocation: null },
+                { name: "金湖鎮 (僅天氣)", weatherStation: "金門", tideLocation: null }
+            ],
+            "連江縣": [
+                { name: "南竿鄉 (福澳港)", weatherStation: "馬祖", tideLocation: "漁港福澳" },
+                { name: "莒光鄉", weatherStation: "馬祖", tideLocation: "連江縣莒光鄉" },
+                { name: "東引鄉", weatherStation: "馬祖", tideLocation: "連江縣東引鄉" },
+                { name: "北竿鄉 (僅天氣)", weatherStation: "馬祖", tideLocation: null }
+            ],
+            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
+            "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
+            "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }]
         };
 
         const countySelect = document.getElementById('countySelect');
@@ -195,7 +302,6 @@
             }
         }
 
-        // 精準單點 + 鎖定 sysdate & sysdate+1 機制
         async function handleLocationChange() {
             const selectedOpt = locationSelect.selectedOptions[0];
             if (!selectedOpt) return;
@@ -209,28 +315,20 @@
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 潮汐處理：只向 API 要求今天與明天的精簡數據
+            // 2. 潮汐呈現 (完全對齊全新 TimePeriods.Daily 結構規格)
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
                 tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在連線撈取最新潮汐資料...</div>';
                 
-                // 動態計算 sysdate 與 sysdate+1 的日期格式 (YYYY-MM-DD)
-                const d1 = new Date();
-                const d2 = new Date();
-                d2.setDate(d1.getDate() + 1);
-                
-                const sysdate = d1.toISOString().split('T')[0];
-                const sysdatePlus1 = d2.toISOString().split('T')[0];
-
                 try {
-                    // 加入 DateFrom 與 DateTo 參數，強迫伺服器只回傳這兩天的輕量數據
-                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}&DateFrom=${sysdate}&DateTo=${sysdatePlus1}`;
+                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}`;
                     const res = await fetch(url);
                     const data = await res.json();
 
-                    if (data.success === "true" && data.records.TideForecasts.Location.length > 0) {
-                        const periods = data.records.TideForecasts.Location[0].TideTimeDailyForecast;
+                    if (data.success === "true" && data.records.TideForecasts.length > 0) {
+                        // 讀取全新格式核心：TideForecasts[0].Location.TimePeriods.Daily
+                        const periods = data.records.TideForecasts[0].Location.TimePeriods.Daily;
                         renderTide(periods);
                     } else {
                         tideContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">📍 氣象署暫無 [${targetTideName}] 數據</div>`;
@@ -240,7 +338,7 @@
                     tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 讀取失敗，請確認該點是否發布預報。</div>';
                 }
             } else {
-                tideSection.classList.add('hidden');
+                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">📍 此觀測點不包含潮汐預報。</div>';
             }
         }
 
@@ -255,14 +353,13 @@
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
         }
 
-        // 重新繪製成「今天與明天」的精簡卡片
+        // 前端過濾出今天與明天的精簡圖表卡片
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
 
             const today = new Date();
             const targetDates = [];
-            // 只生成今天(0)與明天(1)
             for (let i = 0; i <= 1; i++) {
                 const d = new Date();
                 d.setDate(today.getDate() + i);
@@ -281,14 +378,15 @@
                 let lowTides = [];
                 let heights = [];
 
-                dayData.TideTimeForecast.forEach(t => {
-                    const timeStr = t.Time.split(' ')[1].substring(0, 5);
-                    const height = parseInt(t.TideHeightCM);
+                // 對齊氣象署大寫名稱「Time」欄位
+                dayData.Time.forEach(t => {
+                    const timeStr = t.DateTime.substring(11, 16);
+                    const height = parseInt(t.TideHeights.AboveChartDatum);
                     heights.push(height);
 
-                    if (t.WaveHeight.includes('滿潮')) {
+                    if (t.Tide.includes('滿潮')) {
                         highTides.push(`${timeStr} (${height}cm)`);
-                    } else if (t.WaveHeight.includes('乾潮')) {
+                    } else if (t.Tide.includes('乾潮')) {
                         lowTides.push(`${timeStr} (${height}cm)`);
                     }
                 });
@@ -303,10 +401,10 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
                         <div class="flex items-center space-x-2">
-                            <span class="text-base font-bold text-slate-800">${dayData.Date}</span>
+                            <span class="text-base font-bold text-slate-800">${dayData.Date} (農曆 ${dayData.LunarDate.substring(5)})</span>
                             <span class="px-2 py-0.5 text-xs font-semibold rounded-full ${target.isToday ? 'bg-sky-500 text-white' : 'bg-slate-200 text-slate-600'}">${target.label}</span>
                         </div>
-                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">最大潮差: ${maxTideDifference} cm</span>
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">潮差: ${dayData.TideRange} (${maxTideDifference}cm)</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div class="bg-red-50/60 p-2.5 rounded-xl">
