@@ -1,16 +1,3 @@
-const CACHE_NAME = 'tide-weather-v1';
-const ASSETS = [
-  'index.html',
-  'manifest.json',
-  'icon-192.png'
-];
-
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
-});
-
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => response || fetch(e.request))
-  );
-});
+// 強制讓所有安裝過此 PWA 的手機註銷、清空所有卡住的快取檔案
+self.addEventListener('install', (e) => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))).then(() => self.clients.claim()));

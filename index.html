@@ -17,7 +17,6 @@
             <span id="headerTitle">📍 當前位置觀測</span>
         </h1>
         <div class="space-x-2">
-            <!-- 切換分頁的按鈕 -->
             <button id="togglePageBtn" class="bg-sky-700 hover:bg-sky-800 px-3 py-1.5 rounded-lg text-sm transition-colors font-medium shadow-sm">🔍 手動查詢</button>
             <button id="refreshBtn" class="bg-sky-700 hover:bg-sky-800 px-3 py-1.5 rounded-lg text-sm transition-colors shadow-sm">🔄 重新整理</button>
         </div>
@@ -25,7 +24,7 @@
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <!-- 下拉選單頁 (預設隱藏 hidden，點擊按鈕才切換) -->
+        <!-- 下拉選單頁 -->
         <div id="searchPage" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 hidden transition-all">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
                 <span class="text-sm font-bold text-slate-500">🔍 切換其他觀測點</span>
@@ -67,7 +66,7 @@
             </div>
         </div>
 
-        <!-- 數據呈現區塊 (首頁與查詢頁共用，內容隨定位或選單動態更新) -->
+        <!-- 數據呈現區塊 -->
         <div id="content" class="space-y-4">
             <!-- 即時天氣區塊 -->
             <section id="weatherSection" class="bg-gradient-to-br from-sky-400 to-blue-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
@@ -103,11 +102,31 @@
     </main>
 
     <script>
+        // ----------------- 暴力清除 PWA 快取死結 (置頂執行) -----------------
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    registration.unregister().then(function () {
+                        console.log('舊的 Service Worker 已強制登出');
+                    });
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function (names) {
+                for (let name of names) {
+                    caches.delete(name).then(function() {
+                        console.log('舊快取儲存空間已強制清空：', name);
+                    });
+                }
+            });
+        }
+        // ----------------------------------------------------------------
+
         // ----------------- 設定區 -----------------
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 官方正式觀測站對照清單
         const STATION_MAPPING = {
             "基隆市": [
                 { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區", lat: 25.1506, lng: 121.7900 },
@@ -139,7 +158,7 @@
                 { name: "新竹市北區", weatherStation: "新竹", tideLocation: "新竹市北區" , lat: 24.8486, lng: 120.9206 },
                 { name: "新竹市香山區", weatherStation: "新竹", tideLocation: "新竹市香山區", lat: 24.7571, lng: 120.8813 }
             ],
-            "新竹鍵": [
+            "新竹縣": [
                 { name: "新豐鄉", weatherStation: "新竹", tideLocation: "新竹縣新豐鄉", lat: 24.9278, lng: 120.9668 },
                 { name: "竹北市", weatherStation: "新竹", tideLocation: "新竹縣竹北市", lat: 24.8620, lng: 120.9275 }
             ],
@@ -267,22 +286,18 @@
         const weatherSection = document.getElementById('weatherSection');
         const tideSection = document.getElementById('tideSection');
         const refreshBtn = document.getElementById('refreshBtn');
-        
-        // 新增的分頁切換 DOM 元素
         const searchPage = document.getElementById('searchPage');
         const togglePageBtn = document.getElementById('togglePageBtn');
         const backToHomeBtn = document.getElementById('backToHomeBtn');
         const headerTitle = document.getElementById('headerTitle');
 
         let rawWeatherData = null;
-        let isUsingManualSearch = false; // 紀錄目前狀態是手動查詢還是GPS定位
+        let isUsingManualSearch = false;
 
         window.addEventListener('DOMContentLoaded', initializeApp);
         countySelect.addEventListener('change', handleCountyChange);
         locationSelect.addEventListener('change', handleLocationChange);
         refreshBtn.addEventListener('click', forceRefresh);
-        
-        // 綁定頁面切換事件
         togglePageBtn.addEventListener('click', toggleSearchPage);
         backToHomeBtn.addEventListener('click', resetToGPSHome);
 
@@ -291,13 +306,7 @@
                 alert('請先填入中央氣象署 API 授權碼！');
                 return;
             }
-            if ('serviceWorker' in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for (let r of regs) { await r.unregister(); }
-            }
             await fetchWeatherBaseData();
-            
-            // 預設首頁：一進來直接執行 GPS 手機定位
             runGPSLocation();
         }
 
@@ -311,20 +320,18 @@
             }
         }
 
-        // 控制下拉選單頁面的顯示與隱藏
         function toggleSearchPage() {
             if (searchPage.classList.contains('hidden')) {
                 searchPage.classList.remove('hidden');
                 togglePageBtn.innerText = '🏠 返回首頁';
                 isUsingManualSearch = true;
                 headerTitle.innerText = '🔍 手動查閱模式';
-                handleCountyChange(); // 初始化下拉選單的內容
+                handleCountyChange();
             } else {
                 resetToGPSHome();
             }
         }
 
-        // 重設回首頁並重跑 GPS 定位
         function resetToGPSHome() {
             searchPage.classList.add('hidden');
             togglePageBtn.innerText = '🔍 手動查詢';
@@ -333,7 +340,6 @@
             runGPSLocation();
         }
 
-        // GPS 定位運算
         function runGPSLocation() {
             if (!navigator.geolocation) {
                 alert('您的瀏覽器不支援手機定位功能，為您切換至手動查詢。');
@@ -366,7 +372,6 @@
 
                     if (closestLoc) {
                         headerTitle.innerText = `📍 首頁 (${closestLoc.name.split(' ')[0]})`;
-                        // 直接呼叫渲染，不需要去同步改動下拉選單
                         updateMainContent(closestCounty, closestLoc.weatherStation, closestLoc.tideLocation);
                     }
                 },
@@ -380,7 +385,7 @@
         }
 
         function handleCountyChange() {
-            if (!isUsingManualSearch) return; // 如果不是手動查詢狀態，不觸發此選單連動
+            if (!isUsingManualSearch) return;
             
             const selectedCounty = countySelect.value;
             locationSelect.innerHTML = '';
@@ -411,15 +416,12 @@
             updateMainContent(countySelect.value, targetWeatherName, targetTideName);
         }
 
-        // 統一調用渲染核心 (共用邏輯)
         async function updateMainContent(countyName, weatherStationName, tideLocationName) {
-            // 1. 天氣呈現
             if (rawWeatherData && weatherStationName) {
                 const matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName);
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
 
-            // 2. 潮汐呈現
             const tideContainer = document.getElementById('tideContainer');
             if (tideLocationName) {
                 tideSection.classList.remove('hidden');
