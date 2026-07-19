@@ -80,7 +80,7 @@
                 <div class="absolute -right-10 -bottom-10 text-9xl opacity-10 font-bold">☀️</div>
             </section>
 
-            <!-- 潮汐預報區塊 -->
+            <!-- 潮汐預報區塊 (修正了第55行多餘的雙引號) -->
             <section class="space-y-3" id="tideSection">
                 <h3 class="text-base font-bold text-slate-500 px-1 uppercase tracking-wider">🌊 五日潮汐動態 (前天～後天)</h3>
                 <div id="tideContainer" class="space-y-3"></div>
@@ -93,7 +93,6 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 22縣市完整對應清單，且修正各沿海地區的關鍵字配對
         const STATION_MAPPING = {
             "桃園市": [
                 { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "永安" },
@@ -205,7 +204,7 @@
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 潮汐處理（寬鬆比對 + 自帶地名檢驗列表）
+            // 2. 潮汐處理
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
@@ -226,7 +225,6 @@
                         if (matchedTide) {
                             renderTide(matchedTide.TideTimeDailyForecast);
                         } else {
-                            // 如果沒配對成功，列出開放資料目前實際返還的名稱供比對
                             const availableNames = allLocations.map(l => l.LocationName).join(', ');
                             tideContainer.innerHTML = `
                                 <div class="bg-amber-50 text-amber-800 p-4 rounded-xl text-xs space-y-2 border border-amber-200">
@@ -258,6 +256,7 @@
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
         }
 
+        // 修正後的卡片繪製邏輯，確保數據與日期能完美結合
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
