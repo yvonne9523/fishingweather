@@ -21,8 +21,8 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. 選擇縣市</label>
                 <select id="countySelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
-                    <option value="新北市">新北市</option>
                     <option value="桃園市">桃園市</option>
+                    <option value="新北市">新北市</option>
                     <option value="基隆市">基隆市</option>
                     <option value="臺北市">臺北市 (無潮汐)</option>
                     <option value="新竹市">新竹市</option>
@@ -82,7 +82,7 @@
 
             <!-- 潮汐預報區塊 -->
             <section class="space-y-3" id="tideSection">
-                <h3 class="text-base font-bold text-slate-500 px-1 uppercase tracking-wider">🌊 五日潮汐動態 (前天～後天)</h3>
+                <h3 class="text-base font-bold text-slate-500 px-1 uppercase tracking-wider">🌊 當日潮汐動態 (今天～明天)</h3>
                 <div id="tideContainer" class="space-y-3"></div>
             </section>
         </div>
@@ -90,20 +90,19 @@
 
     <script>
         // ----------------- 設定區 -----------------
-        // 這裡直接放您確認有效的授權金鑰
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
         const STATION_MAPPING = {
+            "桃園市": [
+                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
+                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
+            ],
             "新北市": [
                 { name: "龍洞", weatherStation: "鼻頭角", tideLocation: "龍洞" },
                 { name: "淡水", weatherStation: "淡水", tideLocation: "淡水" },
                 { name: "福隆", weatherStation: "福隆", tideLocation: "福隆" },
                 { name: "板橋", weatherStation: "板橋", tideLocation: null }
-            ],
-            "桃園市": [
-                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
-                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
             ],
             "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆港" }],
             "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
@@ -160,7 +159,6 @@
                 alert('請先填入中央氣象署 API 授權碼！');
                 return;
             }
-            // 強制清理 Service Worker 快取死結
             if ('serviceWorker' in navigator) {
                 const regs = await navigator.serviceWorker.getRegistrations();
                 for (let r of regs) { await r.unregister(); }
@@ -197,6 +195,7 @@
             }
         }
 
+        // 精準單點 + 鎖定 sysdate & sysdate+1 機制
         async function handleLocationChange() {
             const selectedOpt = locationSelect.selectedOptions[0];
             if (!selectedOpt) return;
@@ -210,14 +209,23 @@
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 潮汐精準輕量化呈現
+            // 2. 潮汐處理：只向 API 要求今天與明天的精簡數據
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
                 tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在連線撈取最新潮汐資料...</div>';
                 
+                // 動態計算 sysdate 與 sysdate+1 的日期格式 (YYYY-MM-DD)
+                const d1 = new Date();
+                const d2 = new Date();
+                d2.setDate(d1.getDate() + 1);
+                
+                const sysdate = d1.toISOString().split('T')[0];
+                const sysdatePlus1 = d2.toISOString().split('T')[0];
+
                 try {
-                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}`;
+                    // 加入 DateFrom 與 DateTo 參數，強迫伺服器只回傳這兩天的輕量數據
+                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}&DateFrom=${sysdate}&DateTo=${sysdatePlus1}`;
                     const res = await fetch(url);
                     const data = await res.json();
 
@@ -247,18 +255,20 @@
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
         }
 
+        // 重新繪製成「今天與明天」的精簡卡片
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
 
             const today = new Date();
             const targetDates = [];
-            for (let i = -2; i <= 2; i++) {
+            // 只生成今天(0)與明天(1)
+            for (let i = 0; i <= 1; i++) {
                 const d = new Date();
                 d.setDate(today.getDate() + i);
                 targetDates.push({
                     dateString: d.toISOString().split('T')[0],
-                    label: i === -2 ? '前天' : i === -1 ? '昨天' : i === 0 ? '今天' : i === 1 ? '明天' : '後天',
+                    label: i === 0 ? '今天' : '明天',
                     isToday: i === 0
                 });
             }
