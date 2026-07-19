@@ -93,7 +93,7 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 精準補齊對照文件之全台對應表
+        // 所有大分類縣市名稱皆精準對齊官方「臺/台」標準
         const STATION_MAPPING = {
             "桃園市": [
                 { name: "新屋區 (永安漁港)", weatherStation: "新屋", tideLocation: "桃園市新屋區" },
@@ -315,7 +315,7 @@
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 潮汐呈現 (完全對齊全新 TimePeriods.Daily 結構規格)
+            // 2. 潮汐呈現
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
@@ -327,7 +327,6 @@
                     const data = await res.json();
 
                     if (data.success === "true" && data.records.TideForecasts.length > 0) {
-                        // 讀取全新格式核心：TideForecasts[0].Location.TimePeriods.Daily
                         const periods = data.records.TideForecasts[0].Location.TimePeriods.Daily;
                         renderTide(periods);
                     } else {
@@ -347,13 +346,40 @@
             document.getElementById('weatherStation').innerText = `${countySelect.value} (${station.StationName})`;
             document.getElementById('weatherTime').innerText = `更新於 ${obsTime}`;
             
-            const tempVal = station.WeatherElement.AirTemperature;
-            document.getElementById('temp').innerText = (tempVal !== -99 && tempVal !== null) ? tempVal : '--';
-            document.getElementById('windSpeed').innerText = `${station.WeatherElement.WindSpeed} m/s`;
-            document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
+            // 抓取氣象值
+            let tempVal = station.WeatherElement.AirTemperature;
+            let windVal = station.WeatherElement.WindSpeed;
+            let humidVal = station.WeatherElement.RelativeHumidity;
+
+            // 檢查是否遭遇氣象署的官方故障碼 -99
+            const isTempInvalid = (tempVal === -99 || tempVal === "-99" || tempVal === null || tempVal === undefined);
+
+            // 【智慧區域遞補】名稱已全部對齊官方「臺」，直接精準配對
+            if (isTempInvalid && rawWeatherData) {
+                const currentCountyStandard = countySelect.value;
+                
+                const backupStation = rawWeatherData.find(st => {
+                    if (!st.GeoInfo || !st.GeoInfo.CountyName) return false;
+                    return st.GeoInfo.CountyName === currentCountyStandard && 
+                           st.WeatherElement.AirTemperature !== -99 && 
+                           st.WeatherElement.AirTemperature !== "-99" &&
+                           st.WeatherElement.AirTemperature !== null;
+                });
+                
+                if (backupStation) {
+                    document.getElementById('weatherStation').innerText = `${countySelect.value} (${backupStation.StationName}替補)`;
+                    tempVal = backupStation.WeatherElement.AirTemperature;
+                    windVal = backupStation.WeatherElement.WindSpeed;
+                    humidVal = backupStation.WeatherElement.RelativeHumidity;
+                }
+            }
+
+            // 最終渲染與防呆
+            document.getElementById('temp').innerText = (tempVal === -99 || tempVal === "-99" || tempVal === null) ? '--' : tempVal;
+            document.getElementById('windSpeed').innerText = (windVal === -99 || windVal === "-99" || windVal === null) ? '-- m/s' : `${windVal} m/s`;
+            document.getElementById('humidity').innerText = (humidVal === -99 || humidVal === "-99" || humidVal === null) ? '-- %' : `${humidVal} %`;
         }
 
-        // 前端過濾出今天與明天的精簡圖表卡片
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
@@ -378,7 +404,6 @@
                 let lowTides = [];
                 let heights = [];
 
-                // 對齊氣象署大寫名稱「Time」欄位
                 dayData.Time.forEach(t => {
                     const timeStr = t.DateTime.substring(11, 16);
                     const height = parseInt(t.TideHeights.AboveChartDatum);
