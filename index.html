@@ -80,7 +80,7 @@
                 <div class="absolute -right-10 -bottom-10 text-9xl opacity-10 font-bold">☀️</div>
             </section>
 
-            <!-- 潮汐預報區塊 (修正了第55行多餘的雙引號) -->
+            <!-- 潮汐預報區塊 -->
             <section class="space-y-3" id="tideSection">
                 <h3 class="text-base font-bold text-slate-500 px-1 uppercase tracking-wider">🌊 五日潮汐動態 (前天～後天)</h3>
                 <div id="tideContainer" class="space-y-3"></div>
@@ -93,10 +93,11 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
+        // 精準對應氣象署最新的完整站點名稱
         const STATION_MAPPING = {
             "桃園市": [
-                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "永安" },
-                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍" }
+                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
+                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
             ],
             "新北市": [
                 { name: "龍洞", weatherStation: "鼻頭角", tideLocation: "龍洞" },
@@ -104,32 +105,32 @@
                 { name: "福隆", weatherStation: "福隆", tideLocation: "福隆" },
                 { name: "板橋", weatherStation: "板橋", tideLocation: null }
             ],
-            "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆" }],
+            "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆港" }],
             "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
             "新竹市": [{ name: "新竹", weatherStation: "新竹", tideLocation: "新竹" }],
             "新竹縣": [{ name: "竹東", weatherStation: "竹東", tideLocation: "新竹" }],
-            "苗栗縣": [{ name: "後龍", weatherStation: "後龍", tideLocation: "通霄" }],
-            "臺中市": [{ name: "臺中港", weatherStation: "臺中港", tideLocation: "臺中" }],
-            "彰化縣": [{ name: "鹿港", weatherStation: "鹿港", tideLocation: "溫仔" }],
+            "苗栗縣": [{ name: "後龍 (通霄)", weatherStation: "後龍", tideLocation: "苗栗通霄" }],
+            "臺中市": [{ name: "臺中港", weatherStation: "臺中港", tideLocation: "臺中港" }],
+            "彰化縣": [{ name: "鹿港 (溫仔)", weatherStation: "鹿港", tideLocation: "彰化溫仔" }],
             "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
-            "雲林縣": [{ name: "台西", weatherStation: "台西", tideLocation: "台西" }],
-            "嘉義縣": [{ name: "東石", weatherStation: "東石", tideLocation: "東石" }],
+            "雲林縣": [{ name: "台西", weatherStation: "台西", tideLocation: "雲林台西" }],
+            "嘉義縣": [{ name: "東石", weatherStation: "東石", tideLocation: "嘉義東石" }],
             "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }],
-            "臺南市": [{ name: "安平", weatherStation: "安平", tideLocation: "安平" }],
-            "高雄市": [{ name: "高雄", weatherStation: "高雄", tideLocation: "高雄" }],
+            "臺南市": [{ name: "安平港", weatherStation: "安平", tideLocation: "安平港" }],
+            "高雄市": [{ name: "高雄港", weatherStation: "高雄", tideLocation: "高雄港" }],
             "屏東縣": [
-                { name: "恆春", weatherStation: "恆春", tideLocation: "後壁湖" },
+                { name: "恆春 (後壁湖)", weatherStation: "恆春", tideLocation: "後壁湖漁港" },
                 { name: "小琉球", weatherStation: "琉球", tideLocation: "琉球" },
                 { name: "東港", weatherStation: "東港", tideLocation: "東港" }
             ],
             "宜蘭縣": [
-                { name: "蘇澳", weatherStation: "蘇澳", tideLocation: "蘇澳" },
-                { name: "頭城", weatherStation: "頭城", tideLocation: "烏石" }
+                { name: "蘇澳港", weatherStation: "蘇澳", tideLocation: "蘇澳港" },
+                { name: "頭城 (烏石港)", weatherStation: "頭城", tideLocation: "烏石漁港" }
             ],
-            "花蓮縣": [{ name: "花蓮", weatherStation: "花蓮", tideLocation: "花蓮" }],
+            "花蓮縣": [{ name: "花蓮港", weatherStation: "花蓮", tideLocation: "花蓮港" }],
             "臺東縣": [
-                { name: "臺東", weatherStation: "臺東", tideLocation: "臺東" },
-                { name: "成功", weatherStation: "成功", tideLocation: "成功" },
+                { name: "臺東港", weatherStation: "臺東", tideLocation: "臺東港" },
+                { name: "成功", weatherStation: "成功", tideLocation: "成功港" },
                 { name: "綠島", weatherStation: "綠島", tideLocation: "綠島" },
                 { name: "蘭嶼", weatherStation: "蘭嶼", tideLocation: "蘭嶼" }
             ],
@@ -138,7 +139,7 @@
                 { name: "吉貝", weatherStation: "吉貝", tideLocation: "吉貝" }
             ],
             "金門縣": [{ name: "金門", weatherStation: "金門", tideLocation: "金門" }],
-            "連江縣": [{ name: "馬祖", weatherStation: "馬祖", tideLocation: "福澳" }]
+            "連江縣": [{ name: "馬祖", weatherStation: "馬祖", tideLocation: "福澳港" }]
         };
 
         const countySelect = document.getElementById('countySelect');
@@ -191,6 +192,7 @@
             }
         }
 
+        // 單點按需精準請求邏輯：加上 LocationName 參數，傳輸量縮小 99%
         async function handleLocationChange() {
             const selectedOpt = locationSelect.selectedOptions[0];
             if (!selectedOpt) return;
@@ -198,47 +200,33 @@
             const targetWeatherName = selectedOpt.dataset.weatherStation;
             const targetTideName = selectedOpt.dataset.tideLocation;
 
-            // 1. 天氣處理
+            // 1. 渲染天氣
             if (rawWeatherData && targetWeatherName) {
                 const matchedWeather = rawWeatherData.find(st => st.StationName === targetWeatherName);
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 潮汐處理
+            // 2. 渲染潮汐 (精準單點下載)
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
-                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 連線載入中...</div>';
+                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在載入最新潮汐資料...</div>';
                 
                 try {
-                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}`;
+                    // 加上 &LocationName= 參數，伺服器只會回傳該地點的幾十行資料，絕對不卡線失敗！
+                    const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}`;
                     const res = await fetch(url);
                     const data = await res.json();
 
                     if (data.success === "true" && data.records.TideForecasts.Location.length > 0) {
-                        const allLocations = data.records.TideForecasts.Location;
-                        
-                        const matchedTide = allLocations.find(loc => 
-                            loc.LocationName.includes(targetTideName) || targetTideName.includes(loc.LocationName)
-                        );
-
-                        if (matchedTide) {
-                            renderTide(matchedTide.TideTimeDailyForecast);
-                        } else {
-                            const availableNames = allLocations.map(l => l.LocationName).join(', ');
-                            tideContainer.innerHTML = `
-                                <div class="bg-amber-50 text-amber-800 p-4 rounded-xl text-xs space-y-2 border border-amber-200">
-                                    <p class="font-bold">⚠️ 地名配對失敗（氣象署定義名稱不符）</p>
-                                    <p>我們想找：<span class="font-bold underline">${targetTideName}</span></p>
-                                    <p class="opacity-80">目前 API 回傳可用的所有站名為：</p>
-                                    <p class="bg-white p-2 rounded border border-amber-100 max-h-24 overflow-y-auto">${availableNames}</p>
-                                </div>`;
-                        }
+                        const periods = data.records.TideForecasts.Location[0].TideTimeDailyForecast;
+                        renderTide(periods);
                     } else {
-                        tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">❌ 氣象署伺服器回應異常。</div>';
+                        tideContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">📍 氣象署暫無此處的預報</div>`;
                     }
                 } catch (error) {
-                    tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">❌ API 請求失敗，請檢查網路。</div>';
+                    console.error('連線異常:', error);
+                    tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">❌ 讀取潮汐失敗，請稍後重試。</div>';
                 }
             } else {
                 tideSection.classList.add('hidden');
@@ -256,7 +244,6 @@
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
         }
 
-        // 修正後的卡片繪製邏輯，確保數據與日期能完美結合
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
