@@ -9,7 +9,6 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* 隱藏滾動條但保持滾動功能，使頁籤更美觀 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -29,16 +28,16 @@
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <!-- 天氣特報公告欄 (動態出現) -->
+        <!-- 天氣特報公告欄 -->
         <div id="alertBox" class="hidden bg-red-50 border border-red-200 text-red-700 p-3.5 rounded-2xl text-sm font-bold flex items-start gap-2 shadow-sm animate-pulse">
             <span class="text-lg">⚠️</span>
             <div class="space-y-0.5">
-                <p id="alertTitle">天氣特報警告</p>
-                <p id="alertBody" class="text-xs opacity-90 font-medium"></p>
+                <p id="alertTitle" class="text-red-600 font-extrabold"></p>
+                <p id="alertBody" class="text-xs opacity-90 font-bold text-red-600"></p>
             </div>
         </div>
 
-        <!-- 下拉選單頁 (手動模式) -->
+        <!-- 下拉選單頁 -->
         <div id="searchPage" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 hidden transition-all">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
                 <span class="text-sm font-bold text-slate-500">🔍 切換其他觀測點</span>
@@ -78,10 +77,10 @@
             </div>
         </div>
 
-        <!-- 數據呈現主卡片區 -->
+        <!-- 數據呈現主區 -->
         <div id="content" class="space-y-4">
             
-            <!-- 即時綜合天氣主卡片 -->
+            <!-- 即時天氣綜合卡片 -->
             <section id="weatherSection" class="bg-gradient-to-br from-sky-400 to-blue-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
                 <div class="relative z-10 flex justify-between items-stretch min-h-36">
                     <div class="flex flex-col justify-between space-y-2">
@@ -94,7 +93,7 @@
                             <span class="text-2xl font-semibold ml-1">°C</span>
                         </div>
                     </div>
-                    <!-- 智慧天氣狀態圖示 -->
+                    <!-- 右側智慧日夜天氣狀態 -->
                     <div class="flex flex-col justify-between items-end">
                         <div id="weatherIcon" class="text-6xl filter drop-shadow-md">☀️</div>
                         <div class="text-right text-xs bg-black/15 p-2 rounded-xl border border-white/10 backdrop-blur-sm space-y-0.5">
@@ -115,22 +114,22 @@
                 </div>
             </section>
 
-            <!-- 橫向功能切換頁籤導覽列 (比照圖表排版) -->
+            <!-- 橫向功能切換頁籤 -->
             <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
-                <button id="tabBtn-tide" onclick="switchSubSection('tide')" class="px-4 py-2 rounded-xl font-bold text-sm bg-sky-600 text-white shadow-sm transition-all shrink-0">🌊 五日潮汐</button>
+                <button id="tabBtn-tide" onclick="switchSubSection('tide')" class="px-4 py-2 rounded-xl font-bold text-sm bg-sky-600 text-white shadow-sm transition-all shrink-0">🌊 當日潮汐</button>
                 <button id="tabBtn-rain" onclick="switchSubSection('rain')" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border border-slate-100 shadow-sm transition-all shrink-0">☔ 24H降雨機率</button>
             </div>
 
-            <!-- 子功能內容卡片展示區 -->
+            <!-- 內容展示區 -->
             <div id="subSection-tide" class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 px-1 uppercase tracking-wider">🌊 當日潮汐動態 (今天～明天)</h3>
                 <div id="tideContainer" class="space-y-3"></div>
             </div>
 
             <div id="subSection-rain" class="space-y-3 hidden">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🕒 未來 24 小時每小時降雨機率預估</h4>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🕒 未元 24 小時每小時降雨機率預估</h4>
                     <div id="rainContainer" class="grid grid-cols-4 gap-2.5 text-center text-xs">
-                        <!-- 由 JS 動態繪製每小時降雨比率卡片 -->
                     </div>
                 </div>
             </div>
@@ -139,7 +138,6 @@
     </main>
 
     <script>
-        // ----------------- 暴力清除 PWA 快取死結 -----------------
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => { for (let r of regs) r.unregister(); });
         }
@@ -149,7 +147,6 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 觀測站清單
         const STATION_MAPPING = {
             "基隆市": [
                 { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區", lat: 25.1506, lng: 121.7900 },
@@ -211,10 +208,15 @@
         window.addEventListener('DOMContentLoaded', initializeApp);
         countySelect.addEventListener('change', handleCountyChange);
         locationSelect.addEventListener('change', handleLocationChange);
+        refreshBtn.addEventListener('click', forceRefresh);
         togglePageBtn.addEventListener('click', toggleSearchPage);
         backToHomeBtn.addEventListener('click', resetToGPSHome);
 
         async function initializeApp() {
+            if (API_KEY === 'YOUR_API_KEY_HERE' || API_KEY.includes('填入')) {
+                alert('請先填入中央氣象署 API 授權碼！');
+                return;
+            }
             await fetchWeatherBaseData();
             runGPSLocation();
         }
@@ -224,7 +226,7 @@
                 const weatherRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${API_KEY}`);
                 const weatherJson = await weatherRes.json();
                 if (weatherJson.success === "true") rawWeatherData = weatherJson.records.Station;
-            } catch (error) { console.warn('基礎氣象載入失敗', error); }
+            } catch (error) { console.warn('天氣 API 連線失敗', error); }
         }
 
         function toggleSearchPage() {
@@ -257,7 +259,6 @@
                     let closestLoc = null;
                     let minDistance = Infinity;
 
-                    // 臺北市經緯度中心邊界動態防呆限制
                     if (userLat >= 24.96 && userLat <= 25.21 && userLng >= 121.46 && userLng <= 121.67) {
                         closestCounty = "臺北市";
                         closestLoc = STATION_MAPPING["臺北市"][0];
@@ -310,42 +311,36 @@
         }
 
         async function updateMainContent(countyName, weatherStationName, tideLocationName) {
-            // 呼叫 1：氣象站與智慧圖像比對
             if (rawWeatherData && weatherStationName) {
                 const matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName);
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
-            // 呼叫 2：特報資料串接與天文日曆、降雨模擬計算
             fetchHazardsAndAstronomy(countyName);
-            // 呼叫 3：精準潮汐資料卡片
             fetchTideForecast(tideLocationName);
         }
 
-        // 解析降雨、日出、以及特報核心
         async function fetchHazardsAndAstronomy(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
 
             try {
-                // 模擬讀取特報數據與天文數據處理
-                // 1. 特報渲染邏輯 (對齊規定的 W-C0033-001 欄位)
+                // 1. 特報警告渲染 (單一驚嘆號)
                 const mockedHazards = ["臺北市", "新北市", "基隆市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市", "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "南投縣", "連江縣"];
                 if (mockedHazards.includes(countyName)) {
                     alertBox.classList.remove('hidden');
-                    document.getElementById('alertTitle').innerHTML = `<span class="text-red-600 font-extrabold">⚠️ 🔺 天氣特報警告 (${countyName})</span>`;
-                    document.getElementById('alertBody').innerHTML = `<span class="text-red-600 font-bold">該區域正發布：豪雨特報 / 陸上強風特報，請注意沿海低窪地區防汛與強風安全。</span>`;
+                    document.getElementById('alertTitle').innerHTML = `天氣特報警告 (${countyName})`;
+                    document.getElementById('alertBody').innerHTML = `該區域正發布：豪雨特報 / 陸上強風特報，請注意沿海防汛與強風安全。`;
                 }
 
-                // 2. 日出日落對齊 (對齊 A-B0062-001 資料庫格式)
+                // 2. 日出日落設定
+                let sRise = "05:15"; let sSet = "18:41";
                 if (countyName === "臺北市" || countyName === "新北市" || countyName === "基隆市") {
-                    document.getElementById('sunriseTime').innerText = "05:12";
-                    document.getElementById('sunsetTime').innerText = "18:47";
-                } else {
-                    document.getElementById('sunriseTime').innerText = "05:15";
-                    document.getElementById('sunsetTime').innerText = "18:41";
+                    sRise = "05:12"; sSet = "18:47";
                 }
+                document.getElementById('sunriseTime').innerText = sRise;
+                document.getElementById('sunsetTime').innerText = sSet;
 
-                // 3. 24小時降雨預估模擬排版 (如截圖格式)
+                // 3. 24小時降雨預估模擬卡片
                 const rainContainer = document.getElementById('rainContainer');
                 rainContainer.innerHTML = '';
                 const hours = ['00:00', '06:00', '12:00', '18:00'];
@@ -359,7 +354,65 @@
                     rainContainer.appendChild(block);
                 });
 
-            } catch (err) { console.error('細項串接出錯', err); }
+                // 在日出與日沒時間被決定後，立即觸發一次天氣狀態圖示的精準演算
+                if (rawWeatherData) {
+                    const selectedOpt = locationSelect.selectedOptions[0];
+                    const stationName = isUsingManualSearch && selectedOpt ? selectedOpt.dataset.weatherStation : null;
+                    const matchedWeather = rawWeatherData.find(st => st.StationName === (stationName || document.getElementById('weatherStation').innerText.split('(')[1].replace(')', '')));
+                    if (matchedWeather) updateWeatherIconDisplay(matchedWeather);
+                }
+
+            } catch (err) { console.error('額外數據解析異常', err); }
+        }
+
+        // 【精準優化】：完全依照當前系統時間是否大於「日沒時間」的分秒來判斷日夜
+        function updateWeatherIconDisplay(station) {
+            const iconEl = document.getElementById('weatherIcon');
+            let isRainy = false;
+
+            if (station.WeatherElement && station.WeatherElement.Weather) {
+                if (station.WeatherElement.Weather.includes('雨')) { isRainy = true; }
+            }
+            if (station.WeatherElement && station.WeatherElement.Now && station.WeatherElement.Now.Precipitation > 0) {
+                isRainy = true;
+            }
+
+            if (isRainy) {
+                iconEl.innerText = '🌧️';
+                return;
+            }
+
+            // --- 智慧日沒精準時間計算核心 ---
+            const now = new Date();
+            const sunsetText = document.getElementById('sunsetTime').innerText;
+            const sunriseText = document.getElementById('sunriseTime').innerText;
+
+            // 建立當日日沒與日出的時間比對物件
+            let sunsetTimeObj = new Date();
+            let sunriseTimeObj = new Date();
+
+            if (sunsetText && sunsetText.includes(':')) {
+                const parts = sunsetText.split(':');
+                sunsetTimeObj.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+            } else {
+                sunsetTimeObj.setHours(18, 45, 0); // 防呆預設
+            }
+
+            if (sunriseText && sunriseText.includes(':')) {
+                const parts = sunriseText.split(':');
+                sunriseTimeObj.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
+            } else {
+                sunriseTimeObj.setHours(5, 15, 0); // 防呆預設
+            }
+
+            // 邏輯判斷：若當前手機系統時間已經「大於等於日沒時間」或是「小於清晨日出時間」，一律切換為夜間月亮
+            if (now >= sunsetTimeObj || now < sunriseTimeObj) {
+                iconEl.innerText = '🌙';
+            } else {
+                // 白天沒下雨，依溫度高低微調
+                let tempVal = parseFloat(station.WeatherElement.AirTemperature);
+                iconEl.innerText = (tempVal > 30) ? '☀️' : '⛅';
+            }
         }
 
         async function fetchTideForecast(tideLocationName) {
@@ -368,7 +421,7 @@
                 tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">📍 此地區不包含沿海潮汐預報。</div>';
                 return;
             }
-            tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在撈取最新潮汐卡片...</div>';
+            tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在連線撈取最新潮汐動態...</div>';
             try {
                 const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(tideLocationName)}`;
                 const res = await fetch(url);
@@ -384,29 +437,18 @@
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
             document.getElementById('weatherTime').innerText = `更新於 ${obsTime}`;
             
-            let tempVal = station.WeatherElement.AirTemperature;
-            let windVal = station.WeatherElement.WindSpeed;
-            let humidVal = station.WeatherElement.RelativeHumidity;
+            document.getElementById('temp').innerText = station.WeatherElement.AirTemperature;
+            document.getElementById('windSpeed').innerText = `${station.WeatherElement.WindSpeed} m/s`;
+            document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
 
-            // 晴天、雨天、晴時有雨智慧圖示比對
-            const iconEl = document.getElementById('weatherIcon');
-            if (station.WeatherElement.Weather && station.WeatherElement.Weather.includes('雨')) {
-                iconEl.innerText = '🌧️';
-            } else if (tempVal > 30) {
-                iconEl.innerText = '⛅'; // 晴時有雨 / 晴多雲
-            } else {
-                iconEl.innerText = '☀️';
-            }
-
-            document.getElementById('temp').innerText = tempVal;
-            document.getElementById('windSpeed').innerText = `${windVal} m/s`;
-            document.getElementById('humidity').innerText = `${humidVal} %`;
+            updateWeatherIconDisplay(station);
         }
 
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
-            // 只取今明兩天卡片
+            
+            // 一律只擷取前 2 筆卡片（今天與明天）
             periods.slice(0, 2).forEach((dayData, idx) => {
                 let highTides = []; let lowTides = [];
                 dayData.Time.forEach(t => {
@@ -417,11 +459,11 @@
                 });
 
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-2xl shadow-sm border bg-white ${idx === 0 ? 'border-sky-400 ring-2 ring-sky-100' : 'border-slate-100'}`;
+                card.className = `p-4 rounded-2xl shadow-sm border transition-all bg-white ${idx === 0 ? 'border-sky-400 ring-2 ring-sky-100' : 'border-slate-100'}`;
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3">
-                        <span class="text-base font-bold text-slate-800">${dayData.Date}</span>
-                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">大潮差: ${dayData.TideRange}</span>
+                        <span class="text-base font-bold text-slate-800">${dayData.Date} (農曆 ${dayData.LunarDate.substring(5)})</span>
+                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">潮差: ${dayData.TideRange}</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <div class="bg-red-50/60 p-2.5 rounded-xl"><span class="font-bold text-red-600 block mb-1">🔴 滿潮</span>${highTides.join('<br>')}</div>
@@ -431,7 +473,6 @@
             });
         }
 
-        // 子功能頁籤切換核心 (橫向按鈕跳轉排版)
         function switchSubSection(type) {
             const sections = ['tide', 'rain'];
             sections.forEach(s => {
