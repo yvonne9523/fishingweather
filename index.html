@@ -16,9 +16,11 @@
         <h1 class="text-xl font-bold tracking-wide flex items-center gap-1.5">
             <span id="headerTitle">📍 當前位置觀測</span>
         </h1>
-        <div class="space-x-2">
-            <button id="togglePageBtn" class="bg-sky-700 hover:bg-sky-800 px-3 py-1.5 rounded-lg text-sm transition-colors font-medium shadow-sm">🔍 手動查詢</button>
-            <button id="refreshBtn" class="bg-sky-700 hover:bg-sky-800 px-3 py-1.5 rounded-lg text-sm transition-colors shadow-sm">🔄 重新整理</button>
+        <div class="flex items-center gap-1.5">
+            <!-- 智慧切換按鈕：首頁時顯示放大鏡，手動頁時顯示房子圖案 -->
+            <button id="togglePageBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔍</button>
+            <!-- 重新整理按鈕：一律只顯示 recycle 符號 -->
+            <button id="refreshBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔄</button>
         </div>
     </header>
 
@@ -28,7 +30,7 @@
         <div id="searchPage" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 hidden transition-all">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
                 <span class="text-sm font-bold text-slate-500">🔍 切換其他觀測點</span>
-                <button id="backToHomeBtn" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md text-slate-600 font-medium">返回首頁定位</button>
+                <button id="backToHomeBtn" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md text-slate-600 font-medium">🏠 返回首頁定位</button>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. 選擇縣市</label>
@@ -102,29 +104,20 @@
     </main>
 
     <script>
-        // ----------------- 暴力清除 PWA 快取死結 (置頂執行) -----------------
+        // ----------------- 暴力清除 PWA 快取死結 -----------------
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                for (let registration of registrations) {
-                    registration.unregister().then(function () {
-                        console.log('舊的 Service Worker 已強制登出');
-                    });
-                }
+                for (let registration of registrations) { registration.unregister(); }
             });
         }
         if ('caches' in window) {
             caches.keys().then(function (names) {
-                for (let name of names) {
-                    caches.delete(name).then(function() {
-                        console.log('舊快取儲存空間已強制清空：', name);
-                    });
-                }
+                for (let name of names) { caches.delete(name); }
             });
         }
-        // ----------------------------------------------------------------
 
         // ----------------- 設定區 -----------------
-        const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
+        const API_KEY = 'YOUR_API_KEY_HERE'; 
         // ----------------------------------------
 
         const STATION_MAPPING = {
@@ -133,7 +126,7 @@
                 { name: "基隆市中山區", weatherStation: "基隆", tideLocation: "基隆市中山區", lat: 25.1550, lng: 121.7522 },
                 { name: "基隆市安樂區", weatherStation: "基隆", tideLocation: "基隆市安樂區", lat: 25.1675, lng: 121.7110 }
             ],
-            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null, lat: 25.0374, lng: 121.5645 }],
+            "臺北市": [{ name: "臺北市區", weatherStation: "臺北", tideLocation: null, lat: 25.0374, lng: 121.5645 }],
             "新北市": [
                 { name: "龍洞 (潛點水域)", weatherStation: "鼻頭角", tideLocation: "潛點龍洞灣水域B區北側", lat: 25.1180, lng: 121.9190 },
                 { name: "淡水區 (漁港)", weatherStation: "淡水", tideLocation: "新北市淡水區", lat: 25.1915, lng: 121.4140 },
@@ -323,7 +316,7 @@
         function toggleSearchPage() {
             if (searchPage.classList.contains('hidden')) {
                 searchPage.classList.remove('hidden');
-                togglePageBtn.innerText = '🏠 返回首頁';
+                togglePageBtn.innerText = '🏠'; // 切換成純房子符號
                 isUsingManualSearch = true;
                 headerTitle.innerText = '🔍 手動查閱模式';
                 handleCountyChange();
@@ -334,12 +327,13 @@
 
         function resetToGPSHome() {
             searchPage.classList.add('hidden');
-            togglePageBtn.innerText = '🔍 手動查詢';
+            togglePageBtn.innerText = '🔍'; // 切換回純放大鏡符號
             isUsingManualSearch = false;
             headerTitle.innerText = '📍 當前位置觀測';
             runGPSLocation();
         }
 
+        // 智慧型 GPS 定位：加入臺北市防張冠李戴機制
         function runGPSLocation() {
             if (!navigator.geolocation) {
                 alert('您的瀏覽器不支援手機定位功能，為您切換至手動查詢。');
@@ -350,28 +344,44 @@
             headerTitle.innerText = '📍 定位中...';
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
                     
-                    let closestCounty = "基隆市";
+                    let targetCounty = "";
+
+                    // 【臺北市專用修正】利用概略經緯度邊界，直接判定使用者是否在台北市內（破除被板橋吸過去的問題）
+                    if (userLat >= 24.96 && userLat <= 25.21 && userLng >= 121.46 && userLng <= 121.67) {
+                        // 這是大台北地區，我們利用更精準的邊界防呆
+                        // 台北市中心點大約在 25.03, 121.56，此機制能確保只要在台北市，就不會誤判定為新北市板橋
+                        targetCounty = "臺北市";
+                    }
+
+                    let closestCounty = targetCounty || "基隆市";
                     let closestLoc = null;
                     let minDistance = Infinity;
 
-                    for (const [county, locations] of Object.entries(STATION_MAPPING)) {
-                        locations.forEach(loc => {
-                            if (!loc.lat || !loc.lng) return;
-                            const dist = Math.sqrt(Math.pow(loc.lat - userLat, 2) + Math.pow(loc.lng - userLng, 2));
-                            if (dist < minDistance) {
-                                minDistance = dist;
-                                closestCounty = county;
-                                closestLoc = loc;
-                            }
-                        });
+                    // 如果確定是臺北市，直接在臺北市清單內找（不跨區比對）
+                    if (targetCounty === "臺北市") {
+                        closestLoc = STATION_MAPPING["臺北市"][0];
+                        closestCounty = "臺北市";
+                    } else {
+                        // 如果不是台北市，再跑常規的環台最近距離配對
+                        for (const [county, locations] of Object.entries(STATION_MAPPING)) {
+                            locations.forEach(loc => {
+                                if (!loc.lat || !loc.lng) return;
+                                const dist = Math.sqrt(Math.pow(loc.lat - userLat, 2) + Math.pow(loc.lng - userLng, 2));
+                                if (dist < minDistance) {
+                                    minDistance = dist;
+                                    closestCounty = county;
+                                    closestLoc = loc;
+                                }
+                            });
+                        }
                     }
 
                     if (closestLoc) {
-                        headerTitle.innerText = `📍 首頁 (${closestLoc.name.split(' ')[0]})`;
+                        headerTitle.innerText = `📍 首頁 (${closestLoc.name.substring(0,3)})`;
                         updateMainContent(closestCounty, closestLoc.weatherStation, closestLoc.tideLocation);
                     }
                 },
@@ -443,7 +453,13 @@
                     tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 讀取失敗，請確認該點是否發布預報。</div>';
                 }
             } else {
-                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">📍 此觀測點不包含潮汐預報。</div>';
+                tideSection.classList.add('hidden');
+                tideContainer.innerHTML = '';
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'text-center py-6 text-slate-400 text-sm';
+                emptyMsg.innerText = '📍 此觀測點不包含潮汐預報。';
+                tideContainer.appendChild(emptyMsg);
+                tideSection.classList.remove('hidden');
             }
         }
 
