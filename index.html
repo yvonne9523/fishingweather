@@ -21,7 +21,7 @@
             <span id="headerTitle">📍 現在位置觀測</span>
         </h1>
         <div class="flex items-center gap-1.5">
-            <button id="togglePageBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔍</button>
+            <button id="togglePageBtn" class="bg-sky-707 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔍</button>
             <button id="refreshBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔄</button>
         </div>
     </header>
@@ -128,7 +128,7 @@
 
             <div id="subSection-rain" class="space-y-3 hidden">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🕒 未元 24 小時每小時降雨機率預估</h4>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">🕒 未來 24 小時降雨機率預估</h4>
                     <div id="rainContainer" class="grid grid-cols-4 gap-2.5 text-center text-xs">
                     </div>
                 </div>
@@ -147,6 +147,7 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
+        // 觀測站清單（完美修正臺中港等測站名稱與縣市配對）
         const STATION_MAPPING = {
             "基隆市": [
                 { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區", lat: 25.1506, lng: 121.7900 },
@@ -171,7 +172,13 @@
                 { name: "通霄鎮", weatherStation: "後龍", tideLocation: "海水浴場通霄", lat: 24.4928, lng: 120.6736 },
                 { name: "後龍鎮", weatherStation: "後龍", tideLocation: "苗栗縣後龍鎮", lat: 24.6514, lng: 120.7714 }
             ],
-            "臺中市": [{ name: "梧棲區 (漁港)", weatherStation: "臺中港", tideLocation: "漁港梧棲", lat: 24.2878, lng: 120.5331 }],
+            "臺中市": [
+                { name: "梧棲區 (漁港)", weatherStation: "臺中港", tideLocation: "漁港梧棲", lat: 24.2878, lng: 120.5331 },
+                { name: "大甲區", weatherStation: "臺中港", tideLocation: "臺中市大甲區", lat: 24.4015, lng: 120.5809 },
+                { name: "大安區 (海水浴場)", weatherStation: "臺中港", tideLocation: "海水浴場大安", lat: 24.3839, lng: 120.5841 },
+                { name: "清水區", weatherStation: "臺中港", tideLocation: "臺中市清水區", lat: 24.3331, lng: 120.5418 },
+                { name: "龍井區", weatherStation: "臺中港", tideLocation: "臺中市龍井區", lat: 24.2260, lng: 120.4642 }
+            ],
             "彰化縣": [{ name: "鹿港鎮", weatherStation: "鹿港", tideLocation: "彰化縣鹿港鎮", lat: 24.0940, lng: 120.3618 }],
             "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null, lat: 23.8516, lng: 120.9020 }],
             "雲林縣": [{ name: "臺西鄉", weatherStation: "台西", tideLocation: "雲林縣臺西鄉", lat: 23.7474, lng: 120.1650 }],
@@ -311,20 +318,28 @@
         }
 
         async function updateMainContent(countyName, weatherStationName, tideLocationName) {
+            // 修正點 1：傳入正確的縣市名稱（確保智慧替補找對人）
             if (rawWeatherData && weatherStationName) {
                 const matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName);
-                if (matchedWeather) renderWeather(countyName, matchedWeather);
+                if (matchedWeather) {
+                    renderWeather(countyName, matchedWeather);
+                } else {
+                    // 如果找不到對應站點，啟用智慧縣市防呆替補
+                    const backupStation = rawWeatherData.find(st => st.GeoInfo && st.GeoInfo.CountyName === countyName && st.WeatherElement.AirTemperature !== -99);
+                    if (backupStation) renderWeather(countyName, backupStation);
+                }
             }
             fetchHazardsAndAstronomy(countyName);
             fetchTideForecast(tideLocationName);
         }
 
+        // 修正點 2：串接中央氣象署「真實 24H 降雨機率」API
         async function fetchHazardsAndAstronomy(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
 
             try {
-                // 1. 特報警告渲染 (單一驚嘆號)
+                // 特報警告
                 const mockedHazards = ["臺北市", "新北市", "基隆市", "桃園市", "苗栗縣", "臺中市", "彰化縣", "雲林縣", "嘉義市", "嘉義縣", "臺南市", "高雄市", "屏東縣", "宜蘭縣", "花蓮縣", "臺東縣", "南投縣", "連江縣"];
                 if (mockedHazards.includes(countyName)) {
                     alertBox.classList.remove('hidden');
@@ -332,7 +347,7 @@
                     document.getElementById('alertBody').innerHTML = `該區域正發布：豪雨特報 / 陸上強風特報，請注意沿海防汛與強風安全。`;
                 }
 
-                // 2. 日出日落設定
+                // 日出日落設定
                 let sRise = "05:15"; let sSet = "18:41";
                 if (countyName === "臺北市" || countyName === "新北市" || countyName === "基隆市") {
                     sRise = "05:12"; sSet = "18:47";
@@ -340,21 +355,34 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 3. 24小時降雨預估模擬卡片
+                // 串接實時降雨機率預報
                 const rainContainer = document.getElementById('rainContainer');
-                rainContainer.innerHTML = '';
-                const hours = ['00:00', '06:00', '12:00', '18:00'];
-                hours.forEach(h => {
-                    const block = document.createElement('div');
-                    block.className = 'bg-slate-50 p-2 rounded-xl border border-slate-100 flex flex-col items-center';
-                    block.innerHTML = `
-                        <span class="text-slate-400 font-medium">${h}</span>
-                        <span class="text-blue-500 font-bold mt-1 text-sm">85%</span>
-                    `;
-                    rainContainer.appendChild(block);
-                });
+                rainContainer.innerHTML = '<div class="col-span-4 py-2 text-slate-400 text-xs">🔄 載入中...</div>';
 
-                // 在日出與日沒時間被決定後，立即觸發一次天氣狀態圖示的精準演算
+                const rainRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}&elementName=PoP12h`);
+                const rainData = await rainRes.json();
+                
+                rainContainer.innerHTML = '';
+                if (rainData.success === "true" && rainData.records.locations[0].location.length > 0) {
+                    const timeElements = rainData.records.locations[0].location[0].weatherElement[0].time;
+                    
+                    // 撈取未來兩筆 12 小時段（組成 24 小時區間）
+                    timeElements.slice(0, 2).forEach(t => {
+                        const startStr = t.startTime.substring(5, 16).replace(' ', '日 ');
+                        const prob = t.elementValue[0].value !== " " ? t.elementValue[0].value + "%" : "0%";
+                        
+                        const block = document.createElement('div');
+                        block.className = 'col-span-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col items-center';
+                        block.innerHTML = `
+                            <span class="text-slate-400 text-[10px] font-bold">${startStr}</span>
+                            <span class="text-blue-500 font-extrabold mt-1 text-sm">${prob}</span>
+                        `;
+                        rainContainer.appendChild(block);
+                    });
+                } else {
+                    rainContainer.innerHTML = '<div class="col-span-4 py-2 text-slate-400 text-xs">暫無降雨數據</div>';
+                }
+
                 if (rawWeatherData) {
                     const selectedOpt = locationSelect.selectedOptions[0];
                     const stationName = isUsingManualSearch && selectedOpt ? selectedOpt.dataset.weatherStation : null;
@@ -362,10 +390,12 @@
                     if (matchedWeather) updateWeatherIconDisplay(matchedWeather);
                 }
 
-            } catch (err) { console.error('額外數據解析異常', err); }
+            } catch (err) { 
+                console.error(err); 
+                document.getElementById('rainContainer').innerHTML = '<div class="col-span-4 py-2 text-slate-400 text-xs">降雨機率載入失敗</div>';
+            }
         }
 
-        // 【精準優化】：完全依照當前系統時間是否大於「日沒時間」的分秒來判斷日夜
         function updateWeatherIconDisplay(station) {
             const iconEl = document.getElementById('weatherIcon');
             let isRainy = false;
@@ -382,34 +412,26 @@
                 return;
             }
 
-            // --- 智慧日沒精準時間計算核心 ---
             const now = new Date();
             const sunsetText = document.getElementById('sunsetTime').innerText;
             const sunriseText = document.getElementById('sunriseTime').innerText;
 
-            // 建立當日日沒與日出的時間比對物件
             let sunsetTimeObj = new Date();
             let sunriseTimeObj = new Date();
 
             if (sunsetText && sunsetText.includes(':')) {
                 const parts = sunsetText.split(':');
                 sunsetTimeObj.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
-            } else {
-                sunsetTimeObj.setHours(18, 45, 0); // 防呆預設
-            }
+            } else { sunsetTimeObj.setHours(18, 45, 0); }
 
             if (sunriseText && sunriseText.includes(':')) {
                 const parts = sunriseText.split(':');
                 sunriseTimeObj.setHours(parseInt(parts[0]), parseInt(parts[1]), 0);
-            } else {
-                sunriseTimeObj.setHours(5, 15, 0); // 防呆預設
-            }
+            } else { sunriseTimeObj.setHours(5, 15, 0); }
 
-            // 邏輯判斷：若當前手機系統時間已經「大於等於日沒時間」或是「小於清晨日出時間」，一律切換為夜間月亮
             if (now >= sunsetTimeObj || now < sunriseTimeObj) {
                 iconEl.innerText = '🌙';
             } else {
-                // 白天沒下雨，依溫度高低微調
                 let tempVal = parseFloat(station.WeatherElement.AirTemperature);
                 iconEl.innerText = (tempVal > 30) ? '☀️' : '⛅';
             }
@@ -422,14 +444,29 @@
                 return;
             }
             tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在連線撈取最新潮汐動態...</div>';
+            
+            const d1 = new Date();
+            const d2 = new Date();
+            d2.setDate(d1.getDate() + 1);
+
+            const todayStr = d1.toISOString().split('T')[0];
+            const tomorrowStr = d2.toISOString().split('T')[0];
+
             try {
-                const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(tideLocationName)}`;
+                const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(tideLocationName)}&Date=${todayStr}&Date=${tomorrowStr}`;
                 const res = await fetch(url);
                 const data = await res.json();
+                
                 if (data.success === "true" && data.records.TideForecasts.length > 0) {
-                    renderTide(data.records.TideForecasts[0].Location.TimePeriods.Daily);
+                    let periods = data.records.TideForecasts[0].Location.TimePeriods.Daily;
+                    periods.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+                    renderTide(periods);
+                } else {
+                    tideContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">📍 氣象署暫無 [${tideLocationName}] 今日數據</div>`;
                 }
-            } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
+            } catch (e) { 
+                tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; 
+            }
         }
 
         function renderWeather(countyName, station) {
@@ -448,7 +485,6 @@
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
             
-            // 一律只擷取前 2 筆卡片（今天與明天）
             periods.slice(0, 2).forEach((dayData, idx) => {
                 let highTides = []; let lowTides = [];
                 dayData.Time.forEach(t => {
