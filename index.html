@@ -21,8 +21,8 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. 選擇縣市</label>
                 <select id="countySelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
-                    <option value="桃園市">桃園市</option>
                     <option value="新北市">新北市</option>
+                    <option value="桃園市">桃園市</option>
                     <option value="基隆市">基隆市</option>
                     <option value="臺北市">臺北市 (無潮汐)</option>
                     <option value="新竹市">新竹市</option>
@@ -90,20 +90,20 @@
 
     <script>
         // ----------------- 設定區 -----------------
+        // 這裡直接放您確認有效的授權金鑰
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 精準對應氣象署最新的完整站點名稱
         const STATION_MAPPING = {
-            "桃園市": [
-                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
-                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
-            ],
             "新北市": [
                 { name: "龍洞", weatherStation: "鼻頭角", tideLocation: "龍洞" },
                 { name: "淡水", weatherStation: "淡水", tideLocation: "淡水" },
                 { name: "福隆", weatherStation: "福隆", tideLocation: "福隆" },
                 { name: "板橋", weatherStation: "板橋", tideLocation: null }
+            ],
+            "桃園市": [
+                { name: "新屋 (永安)", weatherStation: "新屋", tideLocation: "桃園永安" },
+                { name: "大園 (竹圍)", weatherStation: "大園", tideLocation: "竹圍港" }
             ],
             "基隆市": [{ name: "基隆", weatherStation: "基隆", tideLocation: "基隆港" }],
             "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
@@ -156,9 +156,14 @@
         refreshBtn.addEventListener('click', forceRefresh);
 
         async function initializeApp() {
-            if (API_KEY === 'YOUR_API_KEY_HERE' || !API_KEY) {
-                alert('請先在 index.html 檔案中填入您的中央氣象署 API 授權碼！');
+            if (API_KEY === 'YOUR_API_KEY_HERE' || API_KEY.includes('填入')) {
+                alert('請先填入中央氣象署 API 授權碼！');
                 return;
+            }
+            // 強制清理 Service Worker 快取死結
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let r of regs) { await r.unregister(); }
             }
             await fetchWeatherBaseData();
             handleCountyChange();
@@ -192,7 +197,6 @@
             }
         }
 
-        // 單點按需精準請求邏輯：加上 LocationName 參數，傳輸量縮小 99%
         async function handleLocationChange() {
             const selectedOpt = locationSelect.selectedOptions[0];
             if (!selectedOpt) return;
@@ -200,20 +204,19 @@
             const targetWeatherName = selectedOpt.dataset.weatherStation;
             const targetTideName = selectedOpt.dataset.tideLocation;
 
-            // 1. 渲染天氣
+            // 1. 天氣呈現
             if (rawWeatherData && targetWeatherName) {
                 const matchedWeather = rawWeatherData.find(st => st.StationName === targetWeatherName);
                 if (matchedWeather) renderWeather(matchedWeather);
             }
 
-            // 2. 渲染潮汐 (精準單點下載)
+            // 2. 潮汐精準輕量化呈現
             const tideContainer = document.getElementById('tideContainer');
             if (targetTideName) {
                 tideSection.classList.remove('hidden');
-                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在載入最新潮汐資料...</div>';
+                tideContainer.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">🔄 正在連線撈取最新潮汐資料...</div>';
                 
                 try {
-                    // 加上 &LocationName= 參數，伺服器只會回傳該地點的幾十行資料，絕對不卡線失敗！
                     const url = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-A0021-001?Authorization=${API_KEY}&LocationName=${encodeURIComponent(targetTideName)}`;
                     const res = await fetch(url);
                     const data = await res.json();
@@ -222,11 +225,11 @@
                         const periods = data.records.TideForecasts.Location[0].TideTimeDailyForecast;
                         renderTide(periods);
                     } else {
-                        tideContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">📍 氣象署暫無此處的預報</div>`;
+                        tideContainer.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">📍 氣象署暫無 [${targetTideName}] 數據</div>`;
                     }
                 } catch (error) {
                     console.error('連線異常:', error);
-                    tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">❌ 讀取潮汐失敗，請稍後重試。</div>';
+                    tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 讀取失敗，請確認該點是否發布預報。</div>';
                 }
             } else {
                 tideSection.classList.add('hidden');
