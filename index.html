@@ -21,28 +21,31 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. 選擇縣市</label>
                 <select id="countySelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
-                    <option value="桃園市">桃園市</option>
-                    <option value="新北市">新北市</option>
+                    <!-- 依地理位置：由北到南排序 -->
                     <option value="基隆市">基隆市</option>
-                    <option value="苗栗縣">苗栗縣</option>
+                    <option value="臺北市">臺北市 (無潮汐)</option>
+                    <option value="新北市">新北市</option>
+                    <option value="桃園市">桃園市</option>
                     <option value="新竹市">新竹市</option>
                     <option value="新竹縣">新竹縣</option>
+                    <option value="苗栗縣">苗栗縣</option>
                     <option value="臺中市">臺中市</option>
                     <option value="彰化縣">彰化縣</option>
+                    <option value="南投縣">南投縣 (無潮汐)</option>
                     <option value="雲林縣">雲林縣</option>
+                    <option value="嘉義市">嘉義市 (無潮汐)</option>
                     <option value="嘉義縣">嘉義縣</option>
                     <option value="臺南市">臺南市</option>
                     <option value="高雄市">高雄市</option>
                     <option value="屏東縣">屏東縣</option>
+                    <!-- 東部地區 -->
                     <option value="宜蘭縣">宜蘭縣</option>
                     <option value="花蓮縣">花蓮縣</option>
                     <option value="臺東縣">臺東縣</option>
+                    <!-- 離島地區 -->
                     <option value="澎湖縣">澎湖縣</option>
                     <option value="金門縣">金門縣</option>
                     <option value="連江縣">連江縣</option>
-                    <option value="臺北市">臺北市 (無潮汐)</option>
-                    <option value="南投縣">南投縣 (無潮汐)</option>
-                    <option value="嘉義市">嘉義市 (無潮汐)</option>
                 </select>
             </div>
 
@@ -93,14 +96,14 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 所有大分類縣市名稱皆精準對齊官方「臺/台」標準
+        // 官方正式觀測站對照清單
         const STATION_MAPPING = {
-            "桃園市": [
-                { name: "新屋區 (永安漁港)", weatherStation: "新屋", tideLocation: "桃園市新屋區" },
-                { name: "大園區 (竹圍漁港)", weatherStation: "大園", tideLocation: "桃園市大園區" },
-                { name: "觀音區", weatherStation: "大園", tideLocation: "桃園市觀音區" },
-                { name: "蘆竹區", weatherStation: "大園", tideLocation: "桃園市蘆竹區" }
+            "基隆市": [
+                { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區" },
+                { name: "基隆市中山區", weatherStation: "基隆", tideLocation: "基隆市中山區" },
+                { name: "基隆市安樂區", weatherStation: "基隆", tideLocation: "基隆市安樂區" }
             ],
+            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
             "新北市": [
                 { name: "龍洞 (潛點水域)", weatherStation: "鼻頭角", tideLocation: "潛點龍洞灣水域B區北側" },
                 { name: "淡水區 (漁港)", weatherStation: "淡水", tideLocation: "新北市淡水區" },
@@ -115,16 +118,11 @@
                 { name: "林口區", weatherStation: "淡水", tideLocation: "新北市林口區" },
                 { name: "板橋區 (無潮汐)", weatherStation: "板橋", tideLocation: null }
             ],
-            "基隆市": [
-                { name: "基隆市中正區", weatherStation: "基隆", tideLocation: "基隆市中正區" },
-                { name: "基隆市中山區", weatherStation: "基隆", tideLocation: "基隆市中山區" },
-                { name: "基隆市安樂區", weatherStation: "基隆", tideLocation: "基隆市安樂區" }
-            ],
-            "苗栗縣": [
-                { name: "通霄鎮 (海水浴場)", weatherStation: "後龍", tideLocation: "海水浴場通霄" },
-                { name: "竹南鎮 (海水浴場崎頂)", weatherStation: "後龍", tideLocation: "海水浴場崎頂" },
-                { name: "後龍鎮", weatherStation: "後龍", tideLocation: "苗栗縣後龍鎮" },
-                { name: "苑裡鎮", weatherStation: "後龍", tideLocation: "苗栗縣苑裡鎮" }
+            "桃園市": [
+                { name: "新屋區 (永安漁港)", weatherStation: "新屋", tideLocation: "桃園市新屋區" },
+                { name: "大園區 (竹圍漁港)", weatherStation: "大園", tideLocation: "桃園市大園區" },
+                { name: "觀音區", weatherStation: "大園", tideLocation: "桃園市觀音區" },
+                { name: "蘆竹區", weatherStation: "大園", tideLocation: "桃園市蘆竹區" }
             ],
             "新竹市": [
                 { name: "新竹市北區", weatherStation: "新竹", tideLocation: "新竹市北區" },
@@ -134,10 +132,16 @@
                 { name: "新豐鄉", weatherStation: "新竹", tideLocation: "新竹縣新豐鄉" },
                 { name: "竹北市", weatherStation: "新竹", tideLocation: "新竹縣竹北市" }
             ],
+            "苗栗縣": [
+                { name: "通霄鎮 (海水浴場)", weatherStation: "後龍", tideLocation: "海水浴場通霄" },
+                { name: "竹南鎮 (海水浴場崎頂)", weatherStation: "後龍", tideLocation: "海水浴場崎頂" },
+                { name: "後龍鎮", weatherStation: "後龍", tideLocation: "苗栗縣後龍鎮" },
+                { name: "苑裡鎮", weatherStation: "後龍", tideLocation: "苗栗縣苑裡鎮" }
+            ],
             "臺中市": [
                 { name: "大甲區", weatherStation: "臺中港", tideLocation: "臺中市大甲區" },
                 { name: "大安區 (海水浴場)", weatherStation: "臺中港", tideLocation: "海水浴場大安" },
-                { name: "清水區", weatherStation: "臺中港", tideLocation: "臺中市清水區" },
+                { name: "清水區", weatherStation: "臺中港", tideLocation: "臺市清水區" },
                 { name: "梧棲區 (漁港)", weatherStation: "臺中港", tideLocation: "漁港梧棲" },
                 { name: "龍井區", weatherStation: "臺中港", tideLocation: "臺中市龍井區" }
             ],
@@ -149,12 +153,14 @@
                 { name: "芳苑鄉", weatherStation: "鹿港", tideLocation: "彰化縣芳苑鄉" },
                 { name: "大城鄉", weatherStation: "鹿港", tideLocation: "彰化縣大城鄉" }
             ],
+            "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
             "雲林縣": [
                 { name: "臺西鄉", weatherStation: "台西", tideLocation: "雲林縣臺西鄉" },
                 { name: "麥寮鄉", weatherStation: "台西", tideLocation: "雲林縣麥寮鄉" },
                 { name: "四湖鄉", weatherStation: "台西", tideLocation: "雲林縣四湖鄉" },
                 { name: "口湖鄉", weatherStation: "台西", tideLocation: "雲林縣口湖鄉" }
             ],
+            "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }],
             "嘉義縣": [
                 { name: "東石鄉 (漁港)", weatherStation: "東石", tideLocation: "漁港東石" },
                 { name: "布袋鎮 (商港)", weatherStation: "東石", tideLocation: "海釣布袋商港釣魚示範區" }
@@ -242,10 +248,7 @@
                 { name: "莒光鄉", weatherStation: "馬祖", tideLocation: "連江縣莒光鄉" },
                 { name: "東引鄉", weatherStation: "馬祖", tideLocation: "連江縣東引鄉" },
                 { name: "北竿鄉 (僅天氣)", weatherStation: "馬祖", tideLocation: null }
-            ],
-            "臺北市": [{ name: "臺北", weatherStation: "臺北", tideLocation: null }],
-            "南投縣": [{ name: "日月潭", weatherStation: "日月潭", tideLocation: null }],
-            "嘉義市": [{ name: "嘉義", weatherStation: "嘉義", tideLocation: null }]
+            ]
         };
 
         const countySelect = document.getElementById('countySelect');
@@ -346,18 +349,14 @@
             document.getElementById('weatherStation').innerText = `${countySelect.value} (${station.StationName})`;
             document.getElementById('weatherTime').innerText = `更新於 ${obsTime}`;
             
-            // 抓取氣象值
             let tempVal = station.WeatherElement.AirTemperature;
             let windVal = station.WeatherElement.WindSpeed;
             let humidVal = station.WeatherElement.RelativeHumidity;
 
-            // 檢查是否遭遇氣象署的官方故障碼 -99
             const isTempInvalid = (tempVal === -99 || tempVal === "-99" || tempVal === null || tempVal === undefined);
 
-            // 【智慧區域遞補】名稱已全部對齊官方「臺」，直接精準配對
             if (isTempInvalid && rawWeatherData) {
                 const currentCountyStandard = countySelect.value;
-                
                 const backupStation = rawWeatherData.find(st => {
                     if (!st.GeoInfo || !st.GeoInfo.CountyName) return false;
                     return st.GeoInfo.CountyName === currentCountyStandard && 
@@ -374,7 +373,6 @@
                 }
             }
 
-            // 最終渲染與防呆
             document.getElementById('temp').innerText = (tempVal === -99 || tempVal === "-99" || tempVal === null) ? '--' : tempVal;
             document.getElementById('windSpeed').innerText = (windVal === -99 || windVal === "-99" || windVal === null) ? '-- m/s' : `${windVal} m/s`;
             document.getElementById('humidity').innerText = (humidVal === -99 || humidVal === "-99" || humidVal === null) ? '-- %' : `${humidVal} %`;
