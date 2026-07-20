@@ -1,7 +1,7 @@
 {
   "name": "海象與天氣即時查",
   "short_name": "海象天氣",
-  "start_url": "index.html?v=14.0",
+  "start_url": "index.html?v=15.0",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme-color": "#0284c7",

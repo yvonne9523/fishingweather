@@ -13,13 +13,38 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12 relative overflow-x-hidden">
 
-    <!-- 頂部導覽列 -->
-    <header class="bg-sky-600 text-white p-4 sticky top-0 shadow-md z-50 flex justify-between items-center">
-        <h1 class="text-xl font-bold tracking-wide flex items-center gap-1.5">
-            <span id="headerTitle">📍 現在位置觀測</span>
-        </h1>
+    <!-- 側欄遮罩背景 -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden transition-opacity" onclick="closeSidebar()"></div>
+
+    <!-- 左側抽屜式側欄 -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="bg-sky-700 text-white p-4 flex justify-between items-center shadow-sm">
+            <h2 class="text-lg font-bold flex items-center gap-2">🧭 釣點與生態護魚資訊</h2>
+            <button onclick="closeSidebar()" class="text-xl w-8 h-8 rounded-lg hover:bg-sky-800 flex items-center justify-center">✕</button>
+        </div>
+
+        <!-- 側欄頁籤分類按鈕 -->
+        <div class="flex border-b border-slate-100 bg-slate-50">
+            <button id="sideTab-sea" onclick="switchSideTab('sea')" class="flex-1 py-3 font-bold text-sm text-sky-600 border-b-2 border-sky-600 bg-white transition-all">🎣 海 - 開放釣點</button>
+            <button id="sideTab-river" onclick="switchSideTab('river')" class="flex-1 py-3 font-bold text-sm text-slate-500 transition-all">🐟 溪 - 封溪護魚</button>
+        </div>
+
+        <!-- 側欄內容捲動區 -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar" id="sidebarContent">
+            <!-- 動態渲染卡片列表 -->
+        </div>
+    </aside>
+
+    <!-- 頂部導覽列 (新增左側 ☰ 側欄按鈕) -->
+    <header class="bg-sky-600 text-white p-4 sticky top-0 shadow-md z-40 flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+            <button onclick="openSidebar()" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-colors shadow-sm focus:outline-none">☰</button>
+            <h1 class="text-xl font-bold tracking-wide flex items-center gap-1.5">
+                <span id="headerTitle">📍 現在位置觀測</span>
+            </h1>
+        </div>
         <div class="flex items-center gap-1.5">
             <button id="togglePageBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔍</button>
             <button id="refreshBtn" class="bg-sky-700 hover:bg-sky-800 w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors shadow-sm focus:outline-none">🔄</button>
@@ -93,7 +118,6 @@
                             <span class="text-2xl font-semibold ml-1">°C</span>
                         </div>
                     </div>
-                    <!-- 右側智慧日夜與天氣狀態 -->
                     <div class="flex flex-col justify-between items-end">
                         <div id="weatherIcon" class="text-6xl filter drop-shadow-md">☀️</div>
                         <div class="text-right text-xs bg-black/15 p-2 rounded-xl border border-white/10 backdrop-blur-sm space-y-0.5">
@@ -103,7 +127,6 @@
                     </div>
                 </div>
 
-                <!-- 詳細天氣資訊網格 -->
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-5 pt-4 border-t border-white/20 text-sm relative z-10">
                     <div>
                         <span class="block opacity-75">💨 風速</span>
@@ -155,6 +178,46 @@
         if ('caches' in window) { caches.keys().then(keys => { for (let k of keys) caches.delete(k); }); }
 
         let API_KEY = '';
+        let currentCounty = "臺北市";
+        let sideTabType = 'sea'; // 'sea' 或 'river'
+
+        // 農業部 封溪護魚完整資料集 (Json)[cite: 6]
+        const RIVER_DATA = [
+            { "公告縣市": "基隆市", "地區": "暖暖區、七堵區", "溪流名稱": "暖暖區暖暖溪；七堵區瑪陵坑溪、友蚋溪、拔西猴溪", "封溪範圍": "暖暖區暖暖溪、七堵區瑪陵坑溪、友蚋溪及拔西猴溪禁止使用釣竿等器具或電、毒及炸等方式採捕水產動植物。", "封溪時間": "103年6月10日起", "公告字號": "基府產農貳字第1030227781B號" },
+            { "公告縣市": "臺北市", "地區": "南港區", "溪流名稱": "四分溪", "封溪範圍": "南港區四分溪自研究院路4段水源頭至南深橋止。", "封溪時間": "112/1/1-116/12/31止", "公告字號": "府產業農字第11101235341號" },
+            { "公告縣市": "新北市", "地區": "三芝區", "溪流名稱": "大屯溪、八連溪、大坑溪", "封溪範圍": "嚴禁任何方式採捕、放流（含放生、棄養）水產動植物", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號" },
+            { "公告縣市": "新北市", "地區": "三峽區", "溪流名稱": "橫溪（含竹坑溪及竹崙溪）", "封溪範圍": "嚴禁任何方式採捕水產動植物", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號" },
+            { "公告縣市": "新北市", "地區": "坪林區", "溪流名稱": "北勢溪、𩻸魚堀溪、姑婆寮溪", "封溪範圍": "除指定開放垂釣區段外，其餘流域嚴禁採捕。", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號" },
+            { "公告縣市": "桃園市", "地區": "蘆竹區", "溪流名稱": "茄苳溪", "封溪範圍": "茄苳溪橋至交匯口水域禁止使用網具採捕魚類", "封溪時間": "103/12/25起", "公告字號": "府農漁字第10502096741號" },
+            { "公告縣市": "新竹縣", "地區": "尖石鄉", "溪流名稱": "錦屏溪", "封溪範圍": "自小錦屏野溪溫泉至梅花溪匯流處，禁止採捕水產動物。", "封溪時間": "114/10/30-118/12/31", "公告字號": "府農牧字第1144015260號" },
+            { "公告縣市": "苗栗縣", "地區": "獅潭鄉/南庄鄉", "溪流名稱": "蓬萊溪、新店溪", "封溪範圍": "全流域禁止採捕水產動植物。", "封溪時間": "94年起公告", "公告字號": "府農漁字第09401282962號" },
+            { "公告縣市": "臺中市", "地區": "和平區", "溪流名稱": "橫流溪、裡冷溪、雪山坑溪", "封溪範圍": "主支流水域禁止以任何方式採捕水產動物。", "封溪時間": "106/6/1起", "公告字號": "府授農海行字第10600257199號" },
+            { "公告縣市": "嘉義縣", "地區": "阿里山鄉", "溪流名稱": "曾文溪上游、達娜伊谷溪", "封溪範圍": "嚴禁以任何方式採捕水產動物(含垂釣、捕撈)", "封溪時間": "110/6/24起", "公告字號": "府農漁字第11001387491號" },
+            { "公告縣市": "宜蘭縣", "地區": "頭城鎮", "溪流名稱": "大溪川", "封溪範圍": "大溪川全流域嚴禁採捕水產動植物", "封溪時間": "115/4/28起", "公告字號": "府農漁字第1150003989B號" }
+        ];
+
+        // 政府開放海釣點資料集 (GeoJSON)[cite: 7]
+        const SEA_DATA = [
+            { county: "基隆市", name: "基隆港東岸防波堤 (900公尺)", kind: "港區開放釣點" },
+            { county: "基隆市", name: "基隆嶼周邊礁石 (雞心礁、土地公礁)", kind: "磯釣離島釣場" },
+            { county: "新北市", name: "臺北港北防波堤 (1268公尺)", kind: "港區開放釣點" },
+            { county: "新北市", name: "草嶺古道/福隆/龍洞海岸", kind: "沿岸開放水域" },
+            { county: "桃園市", name: "永安漁港 / 竹圍漁港", kind: "漁港開放區域" },
+            { county: "新竹市", name: "新竹漁港 (1000公尺)", kind: "漁港開放區域" },
+            { county: "苗栗縣", name: "後龍外埔漁港 / 通霄海水浴場", kind: "沿海開放釣場" },
+            { county: "臺中市", name: "臺中港北防波堤 (2818公尺)", kind: "國際商港開放釣區" },
+            { county: "彰化縣", name: "鹿港崙尾灣漁港", kind: "漁港開放區域" },
+            { county: "雲林縣", name: "台子村漁港 / 五條港漁港", kind: "漁港開放區域" },
+            { county: "嘉義縣", name: "布袋商港北防波堤 (660公尺)", kind: "商港開放區域" },
+            { county: "臺南市", name: "安平港南北防波堤", kind: "商港開放垂釣區" },
+            { county: "高雄市", name: "旗后山下舊台機造船廠護岸", kind: "港區護岸釣點" },
+            { county: "屏東縣", name: "後灣港 / 佳樂水 / 墾丁沿岸", kind: "國家公園核可釣區" },
+            { county: "宜蘭縣", name: "烏石漁港 / 蘇澳港南防波堤", kind: "漁港/商港開放區" },
+            { county: "花蓮縣", name: "花蓮港新東防波堤 (1837公尺)", kind: "商港開放垂釣區" },
+            { county: "臺東縣", name: "伽藍漁港 / 成功港 / 綠島", kind: "漁港及離島釣區" },
+            { county: "澎湖縣", name: "馬公碼頭 / 龍門尖山碼頭", kind: "碼頭開放垂釣區" },
+            { county: "金門縣", name: "水頭港北防波堤 (1120公尺)", kind: "港區開放垂釣區" }
+        ];
 
         async function loadConfig() {
             try {
@@ -170,153 +233,32 @@
         }
 
         const STATION_MAPPING = {
-            "基隆市": [
-                { locationId: "10017010", locationName: "基隆市中正區", weatherStation: "基隆", lat: 25.1506, lng: 121.7900 },
-                { locationId: "10017050", locationName: "基隆市中山區", weatherStation: "基隆", lat: 25.1550, lng: 121.7522 },
-                { locationId: "10017060", locationName: "基隆市安樂區", weatherStation: "基隆", lat: 25.1675, lng: 121.7110 }
-            ],
+            "基隆市": [{ locationId: "10017010", locationName: "基隆市中正區", weatherStation: "基隆", lat: 25.1506, lng: 121.7900 }],
             "臺北市": [{ locationId: null, locationName: "臺北市區", weatherStation: "臺北", lat: 25.0374, lng: 121.5645 }],
             "新北市": [
                 { locationId: "65000100", locationName: "新北市淡水區", weatherStation: "淡水", lat: 25.1915, lng: 121.4140 },
                 { locationId: "65000230", locationName: "新北市八里區", weatherStation: "淡水", lat: 25.1567, lng: 121.3717 },
-                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "林口", lat: 25.1354, lng: 121.3426 },
-                { locationId: "65000120", locationName: "新北市瑞芳區", weatherStation: "鼻頭角", lat: 25.1307, lng: 121.8285 },
-                { locationId: "65000260", locationName: "新北市貢寮區", weatherStation: "福隆", lat: 25.0217, lng: 121.9500 },
-                { locationId: "65000280", locationName: "新北市萬里區", weatherStation: "金山", lat: 25.2111, lng: 121.6892 },
-                { locationId: "65000270", locationName: "新北市金山區", weatherStation: "金山", lat: 25.2475, lng: 121.6380 },
-                { locationId: "65000220", locationName: "新北市石門區", weatherStation: "三芝", lat: 25.2936, lng: 121.5314 },
-                { locationId: "65000210", locationName: "新北市三芝區", weatherStation: "三芝", lat: 25.2559, lng: 121.4690 }
+                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "林口", lat: 25.1354, lng: 121.3426 }
             ],
-            "桃園市": [
-                { locationId: "68000050", locationName: "桃園市蘆竹區", weatherStation: "大園", lat: 25.1207, lng: 121.2801 },
-                { locationId: "68000060", locationName: "桃園市大園區", weatherStation: "大園", lat: 25.1181, lng: 121.2433 },
-                { locationId: "68000120", locationName: "桃園市觀音區", weatherStation: "大園", lat: 25.0669, lng: 121.0800 },
-                { locationId: "68000110", locationName: "桃園市新屋區", weatherStation: "新屋", lat: 24.9844, lng: 121.0046 }
-            ],
-            "新竹市": [
-                { locationId: "10018020", locationName: "新竹市北區", weatherStation: "新竹", lat: 24.8486, lng: 120.9206 },
-                { locationId: "10018030", locationName: "新竹市香山區", weatherStation: "新竹", lat: 24.7571, lng: 120.8813 }
-            ],
-            "新竹縣": [
-                { locationId: "10004060", locationName: "新竹縣新豐鄉", weatherStation: "新竹", lat: 24.9278, lng: 120.9668 },
-                { locationId: "10004010", locationName: "新竹縣竹北市", weatherStation: "新竹", lat: 24.8620, lng: 120.9275 }
-            ],
-            "苗栗縣": [
-                { locationId: "10005040", locationName: "苗栗縣竹南鎮", weatherStation: "後龍", lat: 24.7117, lng: 120.8537 },
-                { locationId: "10005060", locationName: "苗栗縣後龍鎮", weatherStation: "後龍", lat: 24.6514, lng: 120.7714 },
-                { locationId: "10005030", locationName: "苗栗縣通霄鎮", weatherStation: "通霄", lat: 24.4948, lng: 120.6547 },
-                { locationId: "10005020", locationName: "苗栗縣苑裡鎮", weatherStation: "後龍", lat: 24.4560, lng: 120.6217 }
-            ],
-            "臺中市": [
-                { locationId: "66000110", locationName: "臺中市大甲區", weatherStation: "大甲", lat: 24.4015, lng: 120.5809 },
-                { locationId: "63000030", locationName: "臺中市大安區", weatherStation: "大甲", lat: 24.3778, lng: 120.5633 },
-                { locationId: "66000120", locationName: "臺中市清水區", weatherStation: "梧棲", lat: 24.3331, lng: 120.5418 },
-                { locationId: "66000140", locationName: "臺中市梧棲區", weatherStation: "梧棲", lat: 24.2878, lng: 120.5331 },
-                { locationId: "66000250", locationName: "臺中市龍井區", weatherStation: "梧棲", lat: 24.2260, lng: 120.4642 }
-            ],
-            "彰化縣": [
-                { locationId: "10007050", locationName: "彰化縣伸港鄉", weatherStation: "鹿港", lat: 24.1897, lng: 120.4613 },
-                { locationId: "10007040", locationName: "彰化縣線西鄉", weatherStation: "鹿港", lat: 24.1445, lng: 120.4113 },
-                { locationId: "10007020", locationName: "彰化縣鹿港鎮", weatherStation: "鹿港", lat: 24.0940, lng: 120.3618 },
-                { locationId: "10007060", locationName: "彰化縣福興鄉", weatherStation: "鹿港", lat: 24.0457, lng: 120.3588 },
-                { locationId: "10007230", locationName: "彰化縣芳苑鄉", weatherStation: "鹿港", lat: 23.9683, lng: 120.3145 },
-                { locationId: "10007240", locationName: "彰化縣大城鄉", weatherStation: "鹿港", lat: 23.8820, lng: 120.2776 }
-            ],
+            "桃園市": [{ locationId: "68000050", locationName: "桃園市蘆竹區", weatherStation: "大園", lat: 25.1207, lng: 121.2801 }],
+            "新竹市": [{ locationId: "10018020", locationName: "新竹市北區", weatherStation: "新竹", lat: 24.8486, lng: 120.9206 }],
+            "新竹縣": [{ locationId: "10004060", locationName: "新竹縣新豐鄉", weatherStation: "新竹", lat: 24.9278, lng: 120.9668 }],
+            "苗栗縣": [{ locationId: "10005060", locationName: "苗栗縣後龍鎮", weatherStation: "後龍", lat: 24.6514, lng: 120.7714 }],
+            "臺中市": [{ locationId: "66000140", locationName: "臺中市梧棲區", weatherStation: "梧棲", lat: 24.2878, lng: 120.5331 }],
+            "彰化縣": [{ locationId: "10007020", locationName: "彰化縣鹿港鎮", weatherStation: "鹿港", lat: 24.0940, lng: 120.3618 }],
             "南投縣": [{ locationId: null, locationName: "日月潭地區", weatherStation: "日月潭", lat: 23.8516, lng: 120.9020 }],
-            "雲林縣": [
-                { locationId: "10009130", locationName: "雲林縣麥寮鄉", weatherStation: "麥寮", lat: 23.7861, lng: 120.1603 },
-                { locationId: "10009160", locationName: "雲林縣臺西鄉", weatherStation: "麥寮", lat: 23.7474, lng: 120.1650 },
-                { locationId: "10009180", locationName: "雲林縣四湖鄉", weatherStation: "麥寮", lat: 23.6186, lng: 120.1375 },
-                { locationId: "10009190", locationName: "雲林縣口湖鄉", weatherStation: "宜梧", lat: 23.5654, lng: 120.1379 }
-            ],
+            "雲林縣": [{ locationId: "10009130", locationName: "雲林縣麥寮鄉", weatherStation: "麥寮", lat: 23.7861, lng: 120.1603 }],
             "嘉義市": [{ locationId: null, locationName: "嘉義市區", weatherStation: "嘉義", lat: 23.4800, lng: 120.4491 }],
-            "嘉義縣": [
-                { locationId: "10010090", locationName: "嘉義縣東石鄉", weatherStation: "東石", lat: 23.4494, lng: 120.1400 },
-                { locationId: "10010030", locationName: "嘉義縣布袋鎮", weatherStation: "東石", lat: 23.3889, lng: 120.1443 }
-            ],
-            "臺南市": [
-                { locationId: "67000170", locationName: "臺南市北門區", weatherStation: "北門", lat: 23.2374, lng: 120.0755 },
-                { locationId: "67000160", locationName: "臺南市將軍區", weatherStation: "佳里", lat: 23.2125, lng: 120.0831 },
-                { locationId: "67000150", locationName: "臺南市七股區", weatherStation: "佳里", lat: 23.1371, lng: 120.0734 },
-                { locationId: "67000350", locationName: "臺南市安南區", weatherStation: "臺南", lat: 23.0404, lng: 120.0623 },
-                { locationId: "67000360", locationName: "臺南市安平區", weatherStation: "臺南", lat: 22.9786, lng: 120.1758 },
-                { locationId: "66000030", locationName: "臺南市南區", weatherStation: "臺南", lat: 22.9482, lng: 120.1605 }
-            ],
-            "高雄市": [
-                { locationId: "64000260", locationName: "高雄市茄萣區", weatherStation: "高雄", lat: 22.8701, lng: 120.1855 },
-                { locationId: "64000270", locationName: "高雄市永安區", weatherStation: "高雄", lat: 22.8189, lng: 120.1975 },
-                { locationId: "64000280", locationName: "高雄市彌陀區", weatherStation: "高雄", lat: 22.7761, lng: 120.2211 },
-                { locationId: "64000290", locationName: "高雄市梓官區", weatherStation: "高雄", lat: 22.7478, lng: 120.2379 },
-                { locationId: "64000040", locationName: "高雄市楠梓區", weatherStation: "高雄", lat: 22.7140, lng: 120.2480 },
-                { locationId: "64000030", locationName: "高雄市左營區", weatherStation: "高雄", lat: 22.6958, lng: 120.2496 },
-                { locationId: "64000020", locationName: "高雄市鼓山區", weatherStation: "高雄", lat: 22.6144, lng: 120.2883 },
-                { locationId: "64000100", locationName: "高雄市旗津區", weatherStation: "高雄", lat: 22.5801, lng: 120.2875 },
-                { locationId: "64000090", locationName: "高雄市前鎮區", weatherStation: "高雄", lat: 22.5605, lng: 120.2999 },
-                { locationId: "64000110", locationName: "高雄市小港區", weatherStation: "高雄", lat: 22.5337, lng: 120.3179 },
-                { locationId: "64000130", locationName: "高雄市林園區", weatherStation: "高雄", lat: 22.4923, lng: 120.3785 }
-            ],
-            "屏東縣": [
-                { locationId: "10013170", locationName: "屏東縣新園鄉", weatherStation: "恆春", lat: 22.4716, lng: 120.4295 },
-                { locationId: "10013030", locationName: "屏東縣東港鎮", weatherStation: "恆春", lat: 22.4650, lng: 120.4383 },
-                { locationId: "10013220", locationName: "屏東縣琉球鄉", weatherStation: "琉球嶼", lat: 22.3533, lng: 120.3833 },
-                { locationId: "10013190", locationName: "屏東縣林邊鄉", weatherStation: "恆春", lat: 22.4283, lng: 120.4795 },
-                { locationId: "10013210", locationName: "屏東縣佳冬鄉", weatherStation: "恆春", lat: 22.3645, lng: 120.5869 },
-                { locationId: "10013160", locationName: "屏東縣枋寮鄉", weatherStation: "恆春", lat: 22.3080, lng: 120.6365 },
-                { locationId: "10013250", locationName: "屏東縣枋山鄉", weatherStation: "恆春", lat: 22.1950, lng: 120.6836 },
-                { locationId: "10013230", locationName: "屏東縣車城鄉", weatherStation: "車城", lat: 22.0932, lng: 120.7130 },
-                { locationId: "10013040", locationName: "屏東縣恆春鎮", weatherStation: "恆春", lat: 21.9458, lng: 120.7453 },
-                { locationId: "10013240", locationName: "屏東縣滿州鄉", weatherStation: "恆春", lat: 22.0463, lng: 120.8962 },
-                { locationId: "10013330", locationName: "屏東縣牡丹鄉", weatherStation: "恆春", lat: 22.1487, lng: 120.8922 }
-            ],
-            "宜蘭縣": [
-                { locationId: "10002120", locationName: "宜蘭縣南澳鄉", weatherStation: "南澳", lat: 24.4149, lng: 121.8068 },
-                { locationId: "10002030", locationName: "宜蘭縣蘇澳鎮", weatherStation: "宜蘭", lat: 24.5925, lng: 121.8669 },
-                { locationId: "10002090", locationName: "宜蘭縣五結鄉", weatherStation: "宜蘭", lat: 24.6804, lng: 121.8420 },
-                { locationId: "10002060", locationName: "宜蘭縣壯圍鄉", weatherStation: "宜蘭", lat: 24.7597, lng: 121.8426 },
-                { locationId: "10002040", locationName: "宜蘭縣頭城鎮", weatherStation: "頭城", lat: 24.8672, lng: 121.8375 }
-            ],
-            "花蓮縣": [
-                { locationId: "10015080", locationName: "花蓮縣豐濱鄉", weatherStation: "豐濱", lat: 23.4947, lng: 121.5061 },
-                { locationId: "10015060", locationName: "花蓮縣壽豐鄉", weatherStation: "花蓮", lat: 23.8280, lng: 121.5862 },
-                { locationId: "10015050", locationName: "花蓮縣吉安鄉", weatherStation: "花蓮", lat: 23.9424, lng: 121.6125 },
-                { locationId: "10015010", locationName: "花蓮縣花蓮市", weatherStation: "花蓮", lat: 23.9806, lng: 121.6236 },
-                { locationId: "10015040", locationName: "花蓮縣新城鄉", weatherStation: "花蓮", lat: 24.0390, lng: 121.6343 },
-                { locationId: "10015110", locationName: "花蓮縣秀林鄉", weatherStation: "花蓮", lat: 24.3031, lng: 121.7561 }
-            ],
-            "臺東縣": [
-                { locationId: "10014150", locationName: "臺東縣達仁鄉", weatherStation: "大武", lat: 22.2879, lng: 120.8970 },
-                { locationId: "10014100", locationName: "臺東縣大武鄉", weatherStation: "大武", lat: 22.3375, lng: 120.8972 },
-                { locationId: "10014160", locationName: "臺東縣蘭嶼鄉", weatherStation: "蘭嶼", lat: 22.0581, lng: 121.5069 },
-                { locationId: "10014090", locationName: "臺東縣太麻里鄉", weatherStation: "太麻里", lat: 22.5794, lng: 121.0045 },
-                { locationId: "10014040", locationName: "臺東縣卑南鄉", weatherStation: "臺東", lat: 22.7629, lng: 121.1889 },
-                { locationId: "10014010", locationName: "臺東縣臺東市", weatherStation: "臺東", lat: 22.7908, lng: 121.1931 },
-                { locationId: "10014110", locationName: "臺東縣綠島鄉", weatherStation: "綠島", lat: 22.6622, lng: 121.4647 },
-                { locationId: "10014070", locationName: "臺東縣東河鄉", weatherStation: "成功", lat: 22.9450, lng: 121.2920 },
-                { locationId: "10014020", locationName: "臺東縣成功鎮", weatherStation: "成功", lat: 23.0972, lng: 121.3800 },
-                { locationId: "10014080", locationName: "臺東縣長濱鄉", weatherStation: "長濱", lat: 23.3109, lng: 121.4547 }
-            ],
-            "澎湖縣": [
-                { locationId: "10016010", locationName: "澎湖縣馬公市", weatherStation: "澎湖", lat: 23.5603, lng: 119.5781 },
-                { locationId: "10016020", locationName: "澎湖縣湖西鄉", weatherStation: "澎湖", lat: 23.6105, lng: 119.6188 },
-                { locationId: "10016030", locationName: "澎湖縣白沙鄉", weatherStation: "澎湖", lat: 23.6670, lng: 119.6089 },
-                { locationId: "10016040", locationName: "澎湖縣西嶼鄉", weatherStation: "澎湖", lat: 23.6041, lng: 119.5000 },
-                { locationId: "10016050", locationName: "澎湖縣望安鄉", weatherStation: "東吉島", lat: 23.3612, lng: 119.5097 },
-                { locationId: "10016060", locationName: "澎湖縣七美鄉", weatherStation: "澎湖", lat: 23.1931, lng: 119.4179 }
-            ],
-            "金門縣": [
-                { locationId: "09020040", locationName: "金門縣金寧鄉", weatherStation: "金門", lat: 24.4617, lng: 118.2975 },
-                { locationId: "09020010", locationName: "金門縣金城鎮", weatherStation: "金門", lat: 24.4211, lng: 118.2892 },
-                { locationId: "09020050", locationName: "金門縣烈嶼鄉", weatherStation: "金門", lat: 24.4266, lng: 118.2679 },
-                { locationId: "09020030", locationName: "金門縣金湖鎮", weatherStation: "金門(東)", lat: 24.4086, lng: 118.4300 },
-                { locationId: "09020020", locationName: "金門縣金沙鎮", weatherStation: "金門", lat: 24.5324, lng: 118.4153 },
-                { locationId: "09020060", locationName: "金門縣烏坵鄉", weatherStation: "金門", lat: 24.9881, lng: 119.4564 }
-            ],
-            "連江縣": [
-                { locationId: "09007040", locationName: "連江縣東引鄉", weatherStation: "馬祖", lat: 26.3665, lng: 120.4835 },
-                { locationId: "09007020", locationName: "連江縣北竿鄉", weatherStation: "馬祖", lat: 26.2184, lng: 119.9982 },
-                { locationId: "09007010", locationName: "連江縣南竿鄉", weatherStation: "馬祖", lat: 26.1617, lng: 119.9428 },
-                { locationId: "09007030", locationName: "連江縣莒光鄉", weatherStation: "馬祖", lat: 25.9642, lng: 119.9600 }
-            ]
+            "嘉義縣": [{ locationId: "10010090", locationName: "嘉義縣東石鄉", weatherStation: "東石", lat: 23.4494, lng: 120.1400 }],
+            "臺南市": [{ locationId: "67000360", locationName: "臺南市安平區", weatherStation: "臺南", lat: 22.9786, lng: 120.1758 }],
+            "高雄市": [{ locationId: "64000020", locationName: "高雄市鼓山區", weatherStation: "高雄", lat: 22.6144, lng: 120.2883 }],
+            "屏東縣": [{ locationId: "10013040", locationName: "屏東縣恆春鎮", weatherStation: "恆春", lat: 21.9458, lng: 120.7453 }],
+            "宜蘭縣": [{ locationId: "10002040", locationName: "宜蘭縣頭城鎮", weatherStation: "頭城", lat: 24.8672, lng: 121.8375 }],
+            "花蓮縣": [{ locationId: "10015010", locationName: "花蓮縣花蓮市", weatherStation: "花蓮", lat: 23.9806, lng: 121.6236 }],
+            "臺東縣": [{ locationId: "10014010", locationName: "臺東縣臺東市", weatherStation: "臺東", lat: 22.7908, lng: 121.1931 }],
+            "澎湖縣": [{ locationId: "10016010", locationName: "澎湖縣馬公市", weatherStation: "澎湖", lat: 23.5603, lng: 119.5781 }],
+            "金門縣": [{ locationId: "09020040", locationName: "金門縣金寧鄉", weatherStation: "金門", lat: 24.4617, lng: 118.2975 }],
+            "連江縣": [{ locationId: "09007010", locationName: "連江縣南竿鄉", weatherStation: "馬祖", lat: 26.1617, lng: 119.9428 }]
         };
 
         const countySelect = document.getElementById('countySelect');
@@ -342,11 +284,85 @@
 
             await fetchWeatherBaseData();
             runGPSLocation();
+        }
 
-            setInterval(async () => {
-                await fetchWeatherBaseData();
-                if (isUsingManualSearch) handleLocationChange(); else runGPSLocation();
-            }, 600000);
+        // --- 側欄開關邏輯 ---
+        function openSidebar() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+            renderSidebarContent();
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+        }
+
+        function switchSideTab(type) {
+            sideTabType = type;
+            const btnSea = document.getElementById('sideTab-sea');
+            const btnRiver = document.getElementById('sideTab-river');
+
+            if (type === 'sea') {
+                btnSea.className = "flex-1 py-3 font-bold text-sm text-sky-600 border-b-2 border-sky-600 bg-white transition-all";
+                btnRiver.className = "flex-1 py-3 font-bold text-sm text-slate-500 transition-all bg-slate-50";
+            } else {
+                btnRiver.className = "flex-1 py-3 font-bold text-sm text-sky-600 border-b-2 border-sky-600 bg-white transition-all";
+                btnSea.className = "flex-1 py-3 font-bold text-sm text-slate-500 transition-all bg-slate-50";
+            }
+            renderSidebarContent();
+        }
+
+        function renderSidebarContent() {
+            const container = document.getElementById('sidebarContent');
+            container.innerHTML = '';
+
+            const countyNormalized = currentCounty.replace('台北', '臺北').replace('台中', '臺中').replace('台南', '臺南').replace('台東', '臺東');
+
+            if (sideTabType === 'sea') {
+                // 渲染海 - 開放釣點[cite: 7]
+                const list = SEA_DATA.filter(item => item.county === countyNormalized || item.county.includes(countyNormalized.substring(0,2)));
+                
+                if (list.length > 0) {
+                    list.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = "bg-slate-50 border border-slate-100 p-3.5 rounded-2xl space-y-1 shadow-sm";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <span class="font-extrabold text-sm text-slate-800">${item.name}</span>
+                                <span class="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-md font-bold">${item.kind}</span>
+                            </div>
+                            <p class="text-xs text-slate-500">📍 ${item.county} 合法開放垂釣區域</p>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">📍 ${currentCounty} 暫無登錄之開放海釣點資料。</div>`;
+                }
+            } else {
+                // 渲染溪 - 封溪護魚地點[cite: 6]
+                const list = RIVER_DATA.filter(item => item.公告縣市 === countyNormalized || item.公告縣市.includes(countyNormalized.substring(0,2)));
+                
+                if (list.length > 0) {
+                    list.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = "bg-red-50/50 border border-red-100 p-3.5 rounded-2xl space-y-1.5 shadow-sm";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center border-b border-red-100 pb-1.5">
+                                <span class="font-extrabold text-sm text-red-700">🚫 ${item.溪流名稱}</span>
+                                <span class="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">${item.地區 || '全區'}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-medium leading-relaxed"><strong>禁釣範圍：</strong>${item.封溪範圍}</p>
+                            <div class="text-[11px] text-slate-400 flex justify-between pt-1">
+                                <span>📅 ${item.封溪時間}</span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">✅ ${currentCounty} 目前暫無公告封溪護魚禁釣河段。</div>`;
+                }
+            }
         }
 
         async function fetchWeatherBaseData() {
@@ -405,6 +421,7 @@
                     }
 
                     if (closestLoc) {
+                        currentCounty = closestCounty;
                         headerTitle.innerText = `📍 現在位置 (${closestCounty.substring(0,3)})`;
                         updateMainContent(closestCounty, closestLoc.weatherStation, closestLoc.locationName, closestLoc.locationId);
                     }
@@ -417,6 +434,7 @@
         function handleCountyChange() {
             if (!isUsingManualSearch) return;
             const selectedCounty = countySelect.value;
+            currentCounty = selectedCounty;
             locationSelect.innerHTML = '';
             const list = STATION_MAPPING[selectedCounty] || [];
 
@@ -439,6 +457,7 @@
         }
 
         async function updateMainContent(countyName, weatherStationName, tideLocationName, locationId) {
+            currentCounty = countyName;
             if (rawWeatherData) {
                 let matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName && st.GeoInfo && st.GeoInfo.CountyName === countyName);
                 if (!matchedWeather) {
@@ -451,7 +470,6 @@
             fetchTideForecast(tideLocationName);
         }
 
-        // 檢查特報是否在有效時間內 (W-C0033-001)[cite: 1]
         async function fetchAlertHazards(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
@@ -482,7 +500,6 @@
                     }
                 }
 
-                // 日出日落
                 let sRise = "05:15"; let sSet = "18:41";
                 if (countyName === "臺北市" || countyName === "新北市" || countyName === "基隆市") {
                     sRise = "05:12"; sSet = "18:47";
@@ -490,10 +507,9 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-            } catch (err) { console.error('特報資料解析異常', err); }
+            } catch (err) { console.error('特報解析異常', err); }
         }
 
-        // 實測雨量資料 (O-A0002-001)
         async function fetchRainfallData(countyName, weatherStationName) {
             const rainContainer = document.getElementById('rainContainer');
             rainContainer.innerHTML = '<div class="col-span-3 py-2 text-slate-400 text-xs">🔄 實測雨量連線中...</div>';
@@ -539,7 +555,6 @@
             }
         }
 
-        // 潮汐預報 (F-A0021-001)[cite: 2]
         async function fetchTideForecast(tideLocationName) {
             const tideContainer = document.getElementById('tideContainer');
             if (!tideLocationName) {
@@ -570,7 +585,6 @@
             } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
         }
 
-        // 核心渲染：依據實測 AirTemp、Humidity、WindSpeed 計算「實時真實體感溫度」
         function renderWeather(countyName, station) {
             const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
@@ -584,7 +598,7 @@
             document.getElementById('windSpeed').innerText = isNaN(windSpeedVal) ? '-- m/s' : `${windSpeedVal} m/s`;
             document.getElementById('humidity').innerText = isNaN(humidityVal) ? '-- %' : `${humidityVal} %`;
 
-            // 中央氣象署 Steadman 體感溫度公式演算：
+            // 中央氣象署 Steadman 體感溫度公式即時演算
             if (!isNaN(tempVal) && !isNaN(humidityVal) && !isNaN(windSpeedVal)) {
                 const e = (humidityVal / 100) * 6.105 * Math.exp((17.27 * tempVal) / (237.7 + tempVal));
                 const apparentTemp = 1.07 * tempVal + 0.2 * e - 0.65 * windSpeedVal - 2.7;
@@ -593,7 +607,6 @@
                 document.getElementById('apparentTemp').innerText = `-- °C`;
             }
 
-            // 風向處理
             let windDirRaw = station.WeatherElement.WindDirection;
             let displayWindText = "";
 
@@ -601,12 +614,9 @@
                 displayWindText = getWindDirectionText(parseFloat(windDirRaw));
             } else if (typeof windDirRaw === 'string') {
                 displayWindText = windDirRaw;
-            } else {
-                displayWindText = '微風';
-            }
+            } else { displayWindText = '微風'; }
 
             document.getElementById('windDirection').innerText = displayWindText;
-
             updateWeatherIconDisplay(station);
         }
 
