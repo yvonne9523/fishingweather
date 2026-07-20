@@ -28,7 +28,7 @@
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <!-- 天氣特報公告欄 (有效時間動態過濾) -->
+        <!-- 天氣特報公告欄 -->
         <div id="alertBox" class="hidden bg-red-50 border border-red-200 text-red-700 p-3.5 rounded-2xl text-sm font-bold flex items-start gap-2 shadow-sm animate-pulse">
             <span class="text-lg">⚠️</span>
             <div class="space-y-0.5">
@@ -156,7 +156,6 @@
 
         let API_KEY = '';
 
-        // 智慧讀取與解密 config.json
         async function loadConfig() {
             try {
                 const res = await fetch(`config.json?v=${Date.now()}`);
@@ -170,6 +169,7 @@
             }
         }
 
+        // 徹底對齊 O-A003-001 (10分鐘自動氣象站) 之真實 WeatherStation 站名
         const STATION_MAPPING = {
             "基隆市": [
                 { locationId: "10017010", locationName: "基隆市中正區", weatherStation: "基隆", lat: 25.1506, lng: 121.7900 },
@@ -180,7 +180,7 @@
             "新北市": [
                 { locationId: "65000100", locationName: "新北市淡水區", weatherStation: "淡水", lat: 25.1915, lng: 121.4140 },
                 { locationId: "65000230", locationName: "新北市八里區", weatherStation: "淡水", lat: 25.1567, lng: 121.3717 },
-                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "淡水", lat: 25.1354, lng: 121.3426 },
+                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "林口", lat: 25.1354, lng: 121.3426 },
                 { locationId: "65000120", locationName: "新北市瑞芳區", weatherStation: "鼻頭角", lat: 25.1307, lng: 121.8285 },
                 { locationId: "65000260", locationName: "新北市貢寮區", weatherStation: "福隆", lat: 25.0217, lng: 121.9500 },
                 { locationId: "65000280", locationName: "新北市萬里區", weatherStation: "金山", lat: 25.2111, lng: 121.6892 },
@@ -205,15 +205,15 @@
             "苗栗縣": [
                 { locationId: "10005040", locationName: "苗栗縣竹南鎮", weatherStation: "後龍", lat: 24.7117, lng: 120.8537 },
                 { locationId: "10005060", locationName: "苗栗縣後龍鎮", weatherStation: "後龍", lat: 24.6514, lng: 120.7714 },
-                { locationId: "10005030", locationName: "苗栗縣通霄鎮", weatherStation: "後龍", lat: 24.4948, lng: 120.6547 },
+                { locationId: "10005030", locationName: "苗栗縣通霄鎮", weatherStation: "通霄", lat: 24.4948, lng: 120.6547 },
                 { locationId: "10005020", locationName: "苗栗縣苑裡鎮", weatherStation: "後龍", lat: 24.4560, lng: 120.6217 }
             ],
             "臺中市": [
-                { locationId: "66000110", locationName: "臺中市大甲區", weatherStation: "臺中港", lat: 24.4015, lng: 120.5809 },
-                { locationId: "63000030", locationName: "臺中市大安區", weatherStation: "臺中港", lat: 24.3778, lng: 120.5633 },
-                { locationId: "66000120", locationName: "臺中市清水區", weatherStation: "臺中港", lat: 24.3331, lng: 120.5418 },
-                { locationId: "66000140", locationName: "臺中市梧棲區", weatherStation: "臺中港", lat: 24.2878, lng: 120.5331 },
-                { locationId: "66000250", locationName: "臺中市龍井區", weatherStation: "臺中港", lat: 24.2260, lng: 120.4642 }
+                { locationId: "66000110", locationName: "臺中市大甲區", weatherStation: "大甲", lat: 24.4015, lng: 120.5809 },
+                { locationId: "63000030", locationName: "臺中市大安區", weatherStation: "大甲", lat: 24.3778, lng: 120.5633 },
+                { locationId: "66000120", locationName: "臺中市清水區", weatherStation: "梧棲", lat: 24.3331, lng: 120.5418 },
+                { locationId: "66000140", locationName: "臺中市梧棲區", weatherStation: "梧棲", lat: 24.2878, lng: 120.5331 },
+                { locationId: "66000250", locationName: "臺中市龍井區", weatherStation: "梧棲", lat: 24.2260, lng: 120.4642 }
             ],
             "彰化縣": [
                 { locationId: "10007050", locationName: "彰化縣伸港鄉", weatherStation: "鹿港", lat: 24.1897, lng: 120.4613 },
@@ -225,10 +225,10 @@
             ],
             "南投縣": [{ locationId: null, locationName: "日月潭地區", weatherStation: "日月潭", lat: 23.8516, lng: 120.9020 }],
             "雲林縣": [
-                { locationId: "10009130", locationName: "雲林縣麥寮鄉", weatherStation: "台西", lat: 23.7861, lng: 120.1603 },
-                { locationId: "10009160", locationName: "雲林縣臺西鄉", weatherStation: "台西", lat: 23.7474, lng: 120.1650 },
-                { locationId: "10009180", locationName: "雲林縣四湖鄉", weatherStation: "台西", lat: 23.6186, lng: 120.1375 },
-                { locationId: "10009190", locationName: "雲林縣口湖鄉", weatherStation: "台西", lat: 23.5654, lng: 120.1379 }
+                { locationId: "10009130", locationName: "雲林縣麥寮鄉", weatherStation: "麥寮", lat: 23.7861, lng: 120.1603 },
+                { locationId: "10009160", locationName: "雲林縣臺西鄉", weatherStation: "麥寮", lat: 23.7474, lng: 120.1650 },
+                { locationId: "10009180", locationName: "雲林縣四湖鄉", weatherStation: "麥寮", lat: 23.6186, lng: 120.1375 },
+                { locationId: "10009190", locationName: "雲林縣口湖鄉", weatherStation: "宜梧", lat: 23.5654, lng: 120.1379 }
             ],
             "嘉義市": [{ locationId: null, locationName: "嘉義市區", weatherStation: "嘉義", lat: 23.4800, lng: 120.4491 }],
             "嘉義縣": [
@@ -236,12 +236,12 @@
                 { locationId: "10010030", locationName: "嘉義縣布袋鎮", weatherStation: "東石", lat: 23.3889, lng: 120.1443 }
             ],
             "臺南市": [
-                { locationId: "67000170", locationName: "臺南市北門區", weatherStation: "安平", lat: 23.2374, lng: 120.0755 },
-                { locationId: "67000160", locationName: "臺南市將軍區", weatherStation: "安平", lat: 23.2125, lng: 120.0831 },
-                { locationId: "67000150", locationName: "臺南市七股區", weatherStation: "安平", lat: 23.1371, lng: 120.0734 },
-                { locationId: "67000350", locationName: "臺南市安南區", weatherStation: "安平", lat: 23.0404, lng: 120.0623 },
-                { locationId: "67000360", locationName: "臺南市安平區", weatherStation: "安平", lat: 22.9786, lng: 120.1758 },
-                { locationId: "66000030", locationName: "臺南市南區", weatherStation: "安平", lat: 22.9482, lng: 120.1605 }
+                { locationId: "67000170", locationName: "臺南市北門區", weatherStation: "北門", lat: 23.2374, lng: 120.0755 },
+                { locationId: "67000160", locationName: "臺南市將軍區", weatherStation: "佳里", lat: 23.2125, lng: 120.0831 },
+                { locationId: "67000150", locationName: "臺南市七股區", weatherStation: "佳里", lat: 23.1371, lng: 120.0734 },
+                { locationId: "67000350", locationName: "臺南市安南區", weatherStation: "臺南", lat: 23.0404, lng: 120.0623 },
+                { locationId: "67000360", locationName: "臺南市安平區", weatherStation: "臺南", lat: 22.9786, lng: 120.1758 },
+                { locationId: "66000030", locationName: "臺南市南區", weatherStation: "臺南", lat: 22.9482, lng: 120.1605 }
             ],
             "高雄市": [
                 { locationId: "64000260", locationName: "高雄市茄萣區", weatherStation: "高雄", lat: 22.8701, lng: 120.1855 },
@@ -257,27 +257,27 @@
                 { locationId: "64000130", locationName: "高雄市林園區", weatherStation: "高雄", lat: 22.4923, lng: 120.3785 }
             ],
             "屏東縣": [
-                { locationId: "10013170", locationName: "屏東縣新園鄉", weatherStation: "東港", lat: 22.4716, lng: 120.4295 },
-                { locationId: "10013030", locationName: "屏東縣東港鎮", weatherStation: "東港", lat: 22.4650, lng: 120.4383 },
-                { locationId: "10013220", locationName: "屏東縣琉球鄉", weatherStation: "琉球", lat: 22.3533, lng: 120.3833 },
-                { locationId: "10013190", locationName: "屏東縣林邊鄉", weatherStation: "東港", lat: 22.4283, lng: 120.4795 },
+                { locationId: "10013170", locationName: "屏東縣新園鄉", weatherStation: "恆春", lat: 22.4716, lng: 120.4295 },
+                { locationId: "10013030", locationName: "屏東縣東港鎮", weatherStation: "恆春", lat: 22.4650, lng: 120.4383 },
+                { locationId: "10013220", locationName: "屏東縣琉球鄉", weatherStation: "琉球嶼", lat: 22.3533, lng: 120.3833 },
+                { locationId: "10013190", locationName: "屏東縣林邊鄉", weatherStation: "恆春", lat: 22.4283, lng: 120.4795 },
                 { locationId: "10013210", locationName: "屏東縣佳冬鄉", weatherStation: "恆春", lat: 22.3645, lng: 120.5869 },
                 { locationId: "10013160", locationName: "屏東縣枋寮鄉", weatherStation: "恆春", lat: 22.3080, lng: 120.6365 },
                 { locationId: "10013250", locationName: "屏東縣枋山鄉", weatherStation: "恆春", lat: 22.1950, lng: 120.6836 },
-                { locationId: "10013230", locationName: "屏東縣車城鄉", weatherStation: "恆春", lat: 22.0932, lng: 120.7130 },
+                { locationId: "10013230", locationName: "屏東縣車城鄉", weatherStation: "車城", lat: 22.0932, lng: 120.7130 },
                 { locationId: "10013040", locationName: "屏東縣恆春鎮", weatherStation: "恆春", lat: 21.9458, lng: 120.7453 },
                 { locationId: "10013240", locationName: "屏東縣滿州鄉", weatherStation: "恆春", lat: 22.0463, lng: 120.8962 },
                 { locationId: "10013330", locationName: "屏東縣牡丹鄉", weatherStation: "恆春", lat: 22.1487, lng: 120.8922 }
             ],
             "宜蘭縣": [
-                { locationId: "10002120", locationName: "宜蘭縣南澳鄉", weatherStation: "蘇澳", lat: 24.4149, lng: 121.8068 },
-                { locationId: "10002030", locationName: "宜蘭縣蘇澳鎮", weatherStation: "蘇澳", lat: 24.5925, lng: 121.8669 },
-                { locationId: "10002090", locationName: "宜蘭縣五結鄉", weatherStation: "蘇澳", lat: 24.6804, lng: 121.8420 },
-                { locationId: "10002060", locationName: "宜蘭縣壯圍鄉", weatherStation: "頭城", lat: 24.7597, lng: 121.8426 },
+                { locationId: "10002120", locationName: "宜蘭縣南澳鄉", weatherStation: "南澳", lat: 24.4149, lng: 121.8068 },
+                { locationId: "10002030", locationName: "宜蘭縣蘇澳鎮", weatherStation: "宜蘭", lat: 24.5925, lng: 121.8669 },
+                { locationId: "10002090", locationName: "宜蘭縣五結鄉", weatherStation: "宜蘭", lat: 24.6804, lng: 121.8420 },
+                { locationId: "10002060", locationName: "宜蘭縣壯圍鄉", weatherStation: "宜蘭", lat: 24.7597, lng: 121.8426 },
                 { locationId: "10002040", locationName: "宜蘭縣頭城鎮", weatherStation: "頭城", lat: 24.8672, lng: 121.8375 }
             ],
             "花蓮縣": [
-                { locationId: "10015080", locationName: "花蓮縣豐濱鄉", weatherStation: "花蓮", lat: 23.4947, lng: 121.5061 },
+                { locationId: "10015080", locationName: "花蓮縣豐濱鄉", weatherStation: "豐濱", lat: 23.4947, lng: 121.5061 },
                 { locationId: "10015060", locationName: "花蓮縣壽豐鄉", weatherStation: "花蓮", lat: 23.8280, lng: 121.5862 },
                 { locationId: "10015050", locationName: "花蓮縣吉安鄉", weatherStation: "花蓮", lat: 23.9424, lng: 121.6125 },
                 { locationId: "10015010", locationName: "花蓮縣花蓮市", weatherStation: "花蓮", lat: 23.9806, lng: 121.6236 },
@@ -285,30 +285,30 @@
                 { locationId: "10015110", locationName: "花蓮縣秀林鄉", weatherStation: "花蓮", lat: 24.3031, lng: 121.7561 }
             ],
             "臺東縣": [
-                { locationId: "10014150", locationName: "臺東縣達仁鄉", weatherStation: "臺東", lat: 22.2879, lng: 120.8970 },
-                { locationId: "10014100", locationName: "臺東縣大武鄉", weatherStation: "臺東", lat: 22.3375, lng: 120.8972 },
+                { locationId: "10014150", locationName: "臺東縣達仁鄉", weatherStation: "大武", lat: 22.2879, lng: 120.8970 },
+                { locationId: "10014100", locationName: "臺東縣大武鄉", weatherStation: "大武", lat: 22.3375, lng: 120.8972 },
                 { locationId: "10014160", locationName: "臺東縣蘭嶼鄉", weatherStation: "蘭嶼", lat: 22.0581, lng: 121.5069 },
-                { locationId: "10014090", locationName: "臺東縣太麻里鄉", weatherStation: "臺東", lat: 22.5794, lng: 121.0045 },
+                { locationId: "10014090", locationName: "臺東縣太麻里鄉", weatherStation: "太麻里", lat: 22.5794, lng: 121.0045 },
                 { locationId: "10014040", locationName: "臺東縣卑南鄉", weatherStation: "臺東", lat: 22.7629, lng: 121.1889 },
                 { locationId: "10014010", locationName: "臺東縣臺東市", weatherStation: "臺東", lat: 22.7908, lng: 121.1931 },
                 { locationId: "10014110", locationName: "臺東縣綠島鄉", weatherStation: "綠島", lat: 22.6622, lng: 121.4647 },
                 { locationId: "10014070", locationName: "臺東縣東河鄉", weatherStation: "成功", lat: 22.9450, lng: 121.2920 },
                 { locationId: "10014020", locationName: "臺東縣成功鎮", weatherStation: "成功", lat: 23.0972, lng: 121.3800 },
-                { locationId: "10014080", locationName: "臺東縣長濱鄉", weatherStation: "成功", lat: 23.3109, lng: 121.4547 }
+                { locationId: "10014080", locationName: "臺東縣長濱鄉", weatherStation: "長濱", lat: 23.3109, lng: 121.4547 }
             ],
             "澎湖縣": [
                 { locationId: "10016010", locationName: "澎湖縣馬公市", weatherStation: "澎湖", lat: 23.5603, lng: 119.5781 },
                 { locationId: "10016020", locationName: "澎湖縣湖西鄉", weatherStation: "澎湖", lat: 23.6105, lng: 119.6188 },
-                { locationId: "10016030", locationName: "澎湖縣白沙鄉", weatherStation: "吉貝", lat: 23.6670, lng: 119.6089 },
+                { locationId: "10016030", locationName: "澎湖縣白沙鄉", weatherStation: "澎湖", lat: 23.6670, lng: 119.6089 },
                 { locationId: "10016040", locationName: "澎湖縣西嶼鄉", weatherStation: "澎湖", lat: 23.6041, lng: 119.5000 },
-                { locationId: "10016050", locationName: "澎湖縣望安鄉", weatherStation: "澎湖", lat: 23.3612, lng: 119.5097 },
+                { locationId: "10016050", locationName: "澎湖縣望安鄉", weatherStation: "東吉島", lat: 23.3612, lng: 119.5097 },
                 { locationId: "10016060", locationName: "澎湖縣七美鄉", weatherStation: "澎湖", lat: 23.1931, lng: 119.4179 }
             ],
             "金門縣": [
                 { locationId: "09020040", locationName: "金門縣金寧鄉", weatherStation: "金門", lat: 24.4617, lng: 118.2975 },
                 { locationId: "09020010", locationName: "金門縣金城鎮", weatherStation: "金門", lat: 24.4211, lng: 118.2892 },
                 { locationId: "09020050", locationName: "金門縣烈嶼鄉", weatherStation: "金門", lat: 24.4266, lng: 118.2679 },
-                { locationId: "09020030", locationName: "金門縣金湖鎮", weatherStation: "金門", lat: 24.4086, lng: 118.4300 },
+                { locationId: "09020030", locationName: "金門縣金湖鎮", weatherStation: "金門(東)", lat: 24.4086, lng: 118.4300 },
                 { locationId: "09020020", locationName: "金門縣金沙鎮", weatherStation: "金門", lat: 24.5324, lng: 118.4153 },
                 { locationId: "09020060", locationName: "金門縣烏坵鄉", weatherStation: "金門", lat: 24.9881, lng: 119.4564 }
             ],
@@ -344,14 +344,13 @@
             await fetchWeatherBaseData();
             runGPSLocation();
 
-            // 每 10 分鐘 (600,000 ms) 自動背景輪詢更新一次即時氣象
+            // 每 10 分鐘自動背景輪詢
             setInterval(async () => {
                 await fetchWeatherBaseData();
                 if (isUsingManualSearch) handleLocationChange(); else runGPSLocation();
             }, 600000);
         }
 
-        // 重點升級：切換為 O-A0003-001 (10 分鐘極速更新氣象資料集)
         async function fetchWeatherBaseData() {
             try {
                 const weatherRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}`);
@@ -442,8 +441,15 @@
         }
 
         async function updateMainContent(countyName, weatherStationName, tideLocationName, locationId) {
-            if (rawWeatherData && weatherStationName) {
-                const matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName);
+            if (rawWeatherData) {
+                // 防呆升級：比對 StationName 且必須同縣市 (GeoInfo.CountyName)
+                let matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName && st.GeoInfo && st.GeoInfo.CountyName === countyName);
+                
+                // 次級備選：同一縣市內第一個有氣溫資料的測站
+                if (!matchedWeather) {
+                    matchedWeather = rawWeatherData.find(st => st.GeoInfo && st.GeoInfo.CountyName === countyName && st.WeatherElement && st.WeatherElement.AirTemperature !== -99);
+                }
+
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
             fetchHazardsAndApparentTemp(countyName);
@@ -490,7 +496,7 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 比對當下最接近之時間，抓取 F-D0047-089 的真實體感溫度
+                // 精準抓取當下整點之體感溫度 (F-D0047-089)
                 const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
                 const forecastJson = await forecastRes.json();
                 
@@ -520,7 +526,7 @@
             } catch (err) { console.error('預報與體感溫度解析異常', err); }
         }
 
-        // 實測累積雨量資料 (O-A0002-001)[cite: 7]
+        // 實測雨量資料 (O-A0002-001)[cite: 7]
         async function fetchRainfallData(countyName, weatherStationName) {
             const rainContainer = document.getElementById('rainContainer');
             rainContainer.innerHTML = '<div class="col-span-3 py-2 text-slate-400 text-xs">🔄 實測雨量連線中...</div>';
@@ -531,7 +537,7 @@
 
                 if (rainJson.success === "true") {
                     const stations = rainJson.records.Station;
-                    let matchedRainStation = stations.find(s => s.StationName.includes(weatherStationName));
+                    let matchedRainStation = stations.find(s => s.StationName.includes(weatherStationName) && s.GeoInfo && s.GeoInfo.CountyName === countyName);
                     if (!matchedRainStation) {
                         matchedRainStation = stations.find(s => s.GeoInfo && s.GeoInfo.CountyName === countyName);
                     }
