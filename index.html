@@ -28,7 +28,7 @@
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <!-- 天氣特報公告欄 -->
+        <!-- 天氣特報公告欄 (有效時間動態過濾) -->
         <div id="alertBox" class="hidden bg-red-50 border border-red-200 text-red-700 p-3.5 rounded-2xl text-sm font-bold flex items-start gap-2 shadow-sm animate-pulse">
             <span class="text-lg">⚠️</span>
             <div class="space-y-0.5">
@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <!-- 下拉選單頁 -->
+        <!-- 下拉選單頁 (手動模式) -->
         <div id="searchPage" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 hidden transition-all">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
                 <span class="text-sm font-bold text-slate-500">🔍 切換其他觀測點</span>
@@ -93,6 +93,7 @@
                             <span class="text-2xl font-semibold ml-1">°C</span>
                         </div>
                     </div>
+                    <!-- 右側智慧日夜與天氣狀態 -->
                     <div class="flex flex-col justify-between items-end">
                         <div id="weatherIcon" class="text-6xl filter drop-shadow-md">☀️</div>
                         <div class="text-right text-xs bg-black/15 p-2 rounded-xl border border-white/10 backdrop-blur-sm space-y-0.5">
@@ -102,6 +103,7 @@
                     </div>
                 </div>
 
+                <!-- 詳細天氣資訊網格 -->
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-5 pt-4 border-t border-white/20 text-sm relative z-10">
                     <div>
                         <span class="block opacity-75">💨 風速</span>
@@ -152,10 +154,9 @@
         }
         if ('caches' in window) { caches.keys().then(keys => { for (let k of keys) caches.delete(k); }); }
 
-        // 全局 API Key 變數 (改由 loadConfig 動態載入)
-        let API_KEY = ''; 
+        let API_KEY = '';
 
-        // 智慧讀取並解密 config.json
+        // 智慧讀取與解密 config.json
         async function loadConfig() {
             try {
                 const res = await fetch(`config.json?v=${Date.now()}`);
@@ -326,6 +327,9 @@
         const backToHomeBtn = document.getElementById('backToHomeBtn');
         const headerTitle = document.getElementById('headerTitle');
 
+        let rawWeatherData = null;
+        let isUsingManualSearch = false;
+
         window.addEventListener('DOMContentLoaded', initializeApp);
         countySelect.addEventListener('change', handleCountyChange);
         locationSelect.addEventListener('change', handleLocationChange);
@@ -339,14 +343,21 @@
 
             await fetchWeatherBaseData();
             runGPSLocation();
+
+            // 每 10 分鐘 (600,000 ms) 自動背景輪詢更新一次即時氣象
+            setInterval(async () => {
+                await fetchWeatherBaseData();
+                if (isUsingManualSearch) handleLocationChange(); else runGPSLocation();
+            }, 600000);
         }
 
+        // 重點升級：切換為 O-A0003-001 (10 分鐘極速更新氣象資料集)
         async function fetchWeatherBaseData() {
             try {
-                const weatherRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=${API_KEY}`);
+                const weatherRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}`);
                 const weatherJson = await weatherRes.json();
                 if (weatherJson.success === "true") rawWeatherData = weatherJson.records.Station;
-            } catch (error) { console.warn('基礎氣象連線失敗', error); }
+            } catch (error) { console.warn('10分鐘即時氣象 API 連線失敗', error); }
         }
 
         function toggleSearchPage() {
@@ -440,7 +451,6 @@
             fetchTideForecast(tideLocationName);
         }
 
-        // 精準尋找與當前系統時間最接近的體感溫度
         async function fetchHazardsAndApparentTemp(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
@@ -480,7 +490,7 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 比對當下整點，精準抓取 F-D0047-089 的體感溫度
+                // 比對當下最接近之時間，抓取 F-D0047-089 的真實體感溫度
                 const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
                 const forecastJson = await forecastRes.json();
                 
@@ -510,7 +520,7 @@
             } catch (err) { console.error('預報與體感溫度解析異常', err); }
         }
 
-        // 實測雨量資料 (O-A0002-001)[cite: 7]
+        // 實測累積雨量資料 (O-A0002-001)[cite: 7]
         async function fetchRainfallData(countyName, weatherStationName) {
             const rainContainer = document.getElementById('rainContainer');
             rainContainer.innerHTML = '<div class="col-span-3 py-2 text-slate-400 text-xs">🔄 實測雨量連線中...</div>';
@@ -587,7 +597,6 @@
             } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
         }
 
-        // 呈現即時天氣，轉中文風向，純中文無重複符號
         function renderWeather(countyName, station) {
             const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
