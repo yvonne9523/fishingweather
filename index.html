@@ -46,7 +46,6 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">1. 選擇縣市 (由北到南排序)</label>
                 <select id="countySelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
-                    <!-- 北部地區 -->
                     <option value="基隆市">基隆市</option>
                     <option value="臺北市">臺北市 (內陸無潮汐)</option>
                     <option value="新北市">新北市</option>
@@ -54,22 +53,18 @@
                     <option value="新竹市">新竹市</option>
                     <option value="新竹縣">新竹縣</option>
                     <option value="苗栗縣">苗栗縣</option>
-                    <!-- 中部地區 -->
                     <option value="臺中市">臺中市</option>
                     <option value="彰化縣">彰化縣</option>
                     <option value="南投縣">南投縣 (內陸無潮汐)</option>
                     <option value="雲林縣">雲林縣</option>
-                    <!-- 南部地區 -->
                     <option value="嘉義市">嘉義市 (內陸無潮汐)</option>
                     <option value="嘉義縣">嘉義縣</option>
                     <option value="臺南市">臺南市</option>
                     <option value="高雄市">高雄市</option>
                     <option value="屏東縣">屏東縣</option>
-                    <!-- 東部地區 -->
                     <option value="宜蘭縣">宜蘭縣</option>
                     <option value="花蓮縣">花蓮縣</option>
                     <option value="臺東縣">臺東縣</option>
-                    <!-- 離島地區 -->
                     <option value="澎湖縣">澎湖縣</option>
                     <option value="金門縣">金門縣</option>
                     <option value="連江縣">連江縣</option>
@@ -108,7 +103,7 @@
                     </div>
                 </div>
 
-                <!-- 詳細天氣資訊網格 -->
+                <!-- 詳細天氣資訊網格 (調整風向欄位標題與呈現格式) -->
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-5 pt-4 border-t border-white/20 text-sm relative z-10">
                     <div>
                         <span class="block opacity-75">💨 風速</span>
@@ -119,8 +114,10 @@
                         <span class="text-base font-semibold mt-0.5 block" id="humidity">-- %</span>
                     </div>
                     <div>
-                        <span class="block opacity-75">🧭 風向指北</span>
-                        <span class="text-base font-semibold mt-0.5 block" id="windDirection">🧭 --</span>
+                        <!-- 需求 2：標題保留指北針，文字改為「風向」 -->
+                        <span class="block opacity-75">🧭 風向</span>
+                        <!-- 數值純呈現中文風向，前無圖示 -->
+                        <span class="text-base font-semibold mt-0.5 block" id="windDirection">--</span>
                     </div>
                     <div>
                         <span class="block opacity-75">🌡️ 體感溫度</span>
@@ -163,7 +160,6 @@
         const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
         // ----------------------------------------
 
-        // 精準對齊 PDF LocationName 與 LocationId
         const STATION_MAPPING = {
             "基隆市": [
                 { locationId: "10017010", locationName: "基隆市中正區", weatherStation: "基隆", lat: 25.1506, lng: 121.7900 },
@@ -439,7 +435,7 @@
             fetchTideForecast(tideLocationName);
         }
 
-        // 需求 2：體感溫度改抓「未來 3 天預報 (F-D0047-089)」，只要抓當下時間段即可
+        // 需求 1 修正：體感溫度動態尋找當下最接近時間點（非死拿第 0 筆）
         async function fetchHazardsAndApparentTemp(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
@@ -479,7 +475,7 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 呼叫 F-D0047-089 API (未來3天預報)，獲取當前單一時間段之體感溫度
+                // 呼叫 F-D0047-089 API，精準比對當下時間
                 const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
                 const forecastJson = await forecastRes.json();
                 
@@ -488,7 +484,21 @@
                     if (loc && loc.WeatherElement) {
                         const appTempEl = loc.WeatherElement.find(e => e.ElementName === "體感溫度");
                         if (appTempEl && appTempEl.Time.length > 0) {
-                            const curAppTemp = appTempEl.Time[0].ElementValue[0].ApparentTemperature;
+                            const now = new Date();
+                            let matchedTimeObj = appTempEl.Time[0];
+                            let minDiff = Infinity;
+
+                            // 尋找與當前系統時間差距最小的那一筆 Time 點
+                            appTempEl.Time.forEach(t => {
+                                const tDate = new Date(t.DataTime);
+                                const diff = Math.abs(now - tDate);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    matchedTimeObj = t;
+                                }
+                            });
+
+                            const curAppTemp = matchedTimeObj.ElementValue[0].ApparentTemperature;
                             document.getElementById('apparentTemp').innerText = `${curAppTemp} °C`;
                         }
                     }
@@ -496,7 +506,7 @@
             } catch (err) { console.error('預報與體感溫度解析異常', err); }
         }
 
-        // 需求 3：雨量改抓實測雨量資料 json (O-A0002-001)[cite: 7]
+        // 實測雨量資料 (O-A0002-001)[cite: 7]
         async function fetchRainfallData(countyName, weatherStationName) {
             const rainContainer = document.getElementById('rainContainer');
             rainContainer.innerHTML = '<div class="col-span-3 py-2 text-slate-400 text-xs">🔄 實測雨量連線中...</div>';
@@ -542,7 +552,7 @@
             }
         }
 
-        // 需求 1 & 4：以精準 LocationName 向 F-A0021-001 請求潮汐預報[cite: 2]
+        // 潮汐預報 (F-A0021-001)[cite: 2]
         async function fetchTideForecast(tideLocationName) {
             const tideContainer = document.getElementById('tideContainer');
             if (!tideLocationName) {
@@ -573,7 +583,7 @@
             } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
         }
 
-        // 需求 5：呈現即時天氣與「🧭 風向指北」標示
+        // 需求 2 修正：呈現即時天氣，將角度數值轉換成中文風向，並移除數字前的重複指北針
         function renderWeather(countyName, station) {
             const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
@@ -583,15 +593,25 @@
             document.getElementById('windSpeed').innerText = `${station.WeatherElement.WindSpeed} m/s`;
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
 
-            let windDir = station.WeatherElement.WindDirection;
-            if (typeof windDir === 'number') {
-                windDir = getWindDirectionText(windDir);
+            // 解析風向：若是角度數字則呼叫轉換函式轉中文，並淨化字串
+            let windDirRaw = station.WeatherElement.WindDirection;
+            let displayWindText = "";
+
+            if (typeof windDirRaw === 'number' || (!isNaN(parseFloat(windDirRaw)) && isFinite(windDirRaw))) {
+                displayWindText = getWindDirectionText(parseFloat(windDirRaw));
+            } else if (typeof windDirRaw === 'string') {
+                displayWindText = windDirRaw;
+            } else {
+                displayWindText = '微風';
             }
-            document.getElementById('windDirection').innerText = `🧭 ${windDir || '微風'}`;
+
+            // 直接填入純中文風向，前面不帶任何重複符號
+            document.getElementById('windDirection').innerText = displayWindText;
 
             updateWeatherIconDisplay(station);
         }
 
+        // 角度轉風向中文工具
         function getWindDirectionText(degree) {
             if (degree >= 337.5 || degree < 22.5) return "北風";
             if (degree >= 22.5 && degree < 67.5) return "東北風";
