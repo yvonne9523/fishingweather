@@ -446,23 +446,22 @@
                 }
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
-            fetchHazardsAndApparentTemp(countyName);
+            fetchAlertHazards(countyName);
             fetchRainfallData(countyName, weatherStationName);
             fetchTideForecast(tideLocationName);
         }
 
-        // 核心修復：精準比對 Locations/Location 物件中對應的同名縣市
-        async function fetchHazardsAndApparentTemp(countyName) {
+        // 檢查特報是否在有效時間內 (W-C0033-001)[cite: 1]
+        async function fetchAlertHazards(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
 
             try {
-                // 特報過期時間動態檢查 (W-C0033-001)[cite: 1]
                 const alertRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/W-C0033-001?Authorization=${API_KEY}`);
                 const alertJson = await alertRes.json();
                 
                 if (alertJson.success === "true" && alertJson.records.location) {
-                    const matchedLoc = alertJson.records.location.find(l => l.locationName === countyName);
+                    const matchedLoc = alertJson.records.location.find(l => l.locationName === countyName || l.locationName === countyName.replace('臺', '台'));
                     if (matchedLoc && matchedLoc.hazardConditions && matchedLoc.hazardConditions.hazards.length > 0) {
                         const nowTime = new Date();
                         let activeHazards = [];
@@ -491,40 +490,10 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 精準向 F-D0047-089 撈取並動態搜尋與當前選取縣市吻合之 Location 物件[cite: 7]
-                const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
-                const forecastJson = await forecastRes.json();
-                
-                if (forecastJson.success === "true" && forecastJson.records.Locations.length > 0) {
-                    const locationsArr = forecastJson.records.Locations[0].Location;
-                    // 修正點：用 .find 比對 LocationName 等於 countyName，避免永遠存取到第 0 筆的連江縣[cite: 7]
-                    const loc = locationsArr.find(l => l.LocationName === countyName) || locationsArr[0];
-                    
-                    if (loc && loc.WeatherElement) {
-                        const appTempEl = loc.WeatherElement.find(e => e.ElementName === "體感溫度");
-                        if (appTempEl && appTempEl.Time.length > 0) {
-                            const now = new Date();
-                            let matchedTimeObj = appTempEl.Time[0];
-                            let minDiff = Infinity;
-
-                            appTempEl.Time.forEach(t => {
-                                const tDate = new Date(t.DataTime);
-                                const diff = Math.abs(now - tDate);
-                                if (diff < minDiff) {
-                                    minDiff = diff;
-                                    matchedTimeObj = t;
-                                }
-                            });
-
-                            const curAppTemp = matchedTimeObj.ElementValue[0].ApparentTemperature;
-                            document.getElementById('apparentTemp').innerText = `${curAppTemp} °C`;
-                        }
-                    }
-                }
-            } catch (err) { console.error('預報與體感溫度解析異常', err); }
+            } catch (err) { console.error('特報資料解析異常', err); }
         }
 
-        // 實測雨量資料 (O-A0002-001)[cite: 7]
+        // 實測雨量資料 (O-A0002-001)
         async function fetchRainfallData(countyName, weatherStationName) {
             const rainContainer = document.getElementById('rainContainer');
             rainContainer.innerHTML = '<div class="col-span-3 py-2 text-slate-400 text-xs">🔄 實測雨量連線中...</div>';
@@ -601,15 +570,30 @@
             } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
         }
 
+        // 核心渲染：依據實測 AirTemp、Humidity、WindSpeed 計算「實時真實體感溫度」
         function renderWeather(countyName, station) {
             const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
             document.getElementById('weatherTime').innerText = `更新於 ${obsTime}`;
             
-            document.getElementById('temp').innerText = station.WeatherElement.AirTemperature;
-            document.getElementById('windSpeed').innerText = `${station.WeatherElement.WindSpeed} m/s`;
-            document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
+            const tempVal = parseFloat(station.WeatherElement.AirTemperature);
+            const windSpeedVal = parseFloat(station.WeatherElement.WindSpeed);
+            const humidityVal = parseFloat(station.WeatherElement.RelativeHumidity);
 
+            document.getElementById('temp').innerText = isNaN(tempVal) ? '--' : tempVal;
+            document.getElementById('windSpeed').innerText = isNaN(windSpeedVal) ? '-- m/s' : `${windSpeedVal} m/s`;
+            document.getElementById('humidity').innerText = isNaN(humidityVal) ? '-- %' : `${humidityVal} %`;
+
+            // 中央氣象署 Steadman 體感溫度公式演算：
+            if (!isNaN(tempVal) && !isNaN(humidityVal) && !isNaN(windSpeedVal)) {
+                const e = (humidityVal / 100) * 6.105 * Math.exp((17.27 * tempVal) / (237.7 + tempVal));
+                const apparentTemp = 1.07 * tempVal + 0.2 * e - 0.65 * windSpeedVal - 2.7;
+                document.getElementById('apparentTemp').innerText = `${apparentTemp.toFixed(1)} °C`;
+            } else {
+                document.getElementById('apparentTemp').innerText = `-- °C`;
+            }
+
+            // 風向處理
             let windDirRaw = station.WeatherElement.WindDirection;
             let displayWindText = "";
 
