@@ -169,7 +169,6 @@
             }
         }
 
-        // 徹底對齊 O-A003-001 (10分鐘自動氣象站) 之真實 WeatherStation 站名
         const STATION_MAPPING = {
             "基隆市": [
                 { locationId: "10017010", locationName: "基隆市中正區", weatherStation: "基隆", lat: 25.1506, lng: 121.7900 },
@@ -344,7 +343,6 @@
             await fetchWeatherBaseData();
             runGPSLocation();
 
-            // 每 10 分鐘自動背景輪詢
             setInterval(async () => {
                 await fetchWeatherBaseData();
                 if (isUsingManualSearch) handleLocationChange(); else runGPSLocation();
@@ -442,14 +440,10 @@
 
         async function updateMainContent(countyName, weatherStationName, tideLocationName, locationId) {
             if (rawWeatherData) {
-                // 防呆升級：比對 StationName 且必須同縣市 (GeoInfo.CountyName)
                 let matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName && st.GeoInfo && st.GeoInfo.CountyName === countyName);
-                
-                // 次級備選：同一縣市內第一個有氣溫資料的測站
                 if (!matchedWeather) {
                     matchedWeather = rawWeatherData.find(st => st.GeoInfo && st.GeoInfo.CountyName === countyName && st.WeatherElement && st.WeatherElement.AirTemperature !== -99);
                 }
-
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
             fetchHazardsAndApparentTemp(countyName);
@@ -457,6 +451,7 @@
             fetchTideForecast(tideLocationName);
         }
 
+        // 核心修復：精準比對 Locations/Location 物件中對應的同名縣市
         async function fetchHazardsAndApparentTemp(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
@@ -496,12 +491,15 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 精準抓取當下整點之體感溫度 (F-D0047-089)
+                // 精準向 F-D0047-089 撈取並動態搜尋與當前選取縣市吻合之 Location 物件[cite: 7]
                 const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
                 const forecastJson = await forecastRes.json();
                 
                 if (forecastJson.success === "true" && forecastJson.records.Locations.length > 0) {
-                    const loc = forecastJson.records.Locations[0].Location[0];
+                    const locationsArr = forecastJson.records.Locations[0].Location;
+                    // 修正點：用 .find 比對 LocationName 等於 countyName，避免永遠存取到第 0 筆的連江縣[cite: 7]
+                    const loc = locationsArr.find(l => l.LocationName === countyName) || locationsArr[0];
+                    
                     if (loc && loc.WeatherElement) {
                         const appTempEl = loc.WeatherElement.find(e => e.ElementName === "體感溫度");
                         if (appTempEl && appTempEl.Time.length > 0) {
