@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <!-- 下拉選單頁 (手動模式) -->
+        <!-- 下拉選單頁 -->
         <div id="searchPage" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3 hidden transition-all">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-1">
                 <span class="text-sm font-bold text-slate-500">🔍 切換其他觀測點</span>
@@ -93,7 +93,6 @@
                             <span class="text-2xl font-semibold ml-1">°C</span>
                         </div>
                     </div>
-                    <!-- 右側智慧日夜與天氣狀態 -->
                     <div class="flex flex-col justify-between items-end">
                         <div id="weatherIcon" class="text-6xl filter drop-shadow-md">☀️</div>
                         <div class="text-right text-xs bg-black/15 p-2 rounded-xl border border-white/10 backdrop-blur-sm space-y-0.5">
@@ -103,7 +102,6 @@
                     </div>
                 </div>
 
-                <!-- 詳細天氣資訊網格 (調整風向欄位標題與呈現格式) -->
                 <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 mt-5 pt-4 border-t border-white/20 text-sm relative z-10">
                     <div>
                         <span class="block opacity-75">💨 風速</span>
@@ -114,9 +112,7 @@
                         <span class="text-base font-semibold mt-0.5 block" id="humidity">-- %</span>
                     </div>
                     <div>
-                        <!-- 需求 2：標題保留指北針，文字改為「風向」 -->
                         <span class="block opacity-75">🧭 風向</span>
-                        <!-- 數值純呈現中文風向，前無圖示 -->
                         <span class="text-base font-semibold mt-0.5 block" id="windDirection">--</span>
                     </div>
                     <div>
@@ -156,9 +152,22 @@
         }
         if ('caches' in window) { caches.keys().then(keys => { for (let k of keys) caches.delete(k); }); }
 
-        // ----------------- 設定區 -----------------
-        const API_KEY = 'CWA-14A75B7D-0B59-4AC5-9154-CE83FD3B9BF4'; 
-        // ----------------------------------------
+        // 全局 API Key 變數 (改由 loadConfig 動態載入)
+        let API_KEY = ''; 
+
+        // 智慧讀取並解密 config.json
+        async function loadConfig() {
+            try {
+                const res = await fetch(`config.json?v=${Date.now()}`);
+                if (!res.ok) throw new Error('找不到 config.json');
+                const config = await res.json();
+                return atob(config.CWA_API_KEY).split('').reverse().join('');
+            } catch (error) {
+                console.error('配置檔讀取錯誤:', error);
+                alert('⚠️ 讀取 config.json 失敗，請確認檔案已正確建立！');
+                return null;
+            }
+        }
 
         const STATION_MAPPING = {
             "基隆市": [
@@ -317,9 +326,6 @@
         const backToHomeBtn = document.getElementById('backToHomeBtn');
         const headerTitle = document.getElementById('headerTitle');
 
-        let rawWeatherData = null;
-        let isUsingManualSearch = false;
-
         window.addEventListener('DOMContentLoaded', initializeApp);
         countySelect.addEventListener('change', handleCountyChange);
         locationSelect.addEventListener('change', handleLocationChange);
@@ -328,10 +334,9 @@
         backToHomeBtn.addEventListener('click', resetToGPSHome);
 
         async function initializeApp() {
-            if (API_KEY === 'YOUR_API_KEY_HERE' || API_KEY.includes('填入')) {
-                alert('請先填入中央氣象署 API 授權碼！');
-                return;
-            }
+            API_KEY = await loadConfig();
+            if (!API_KEY) return;
+
             await fetchWeatherBaseData();
             runGPSLocation();
         }
@@ -435,7 +440,7 @@
             fetchTideForecast(tideLocationName);
         }
 
-        // 需求 1 修正：體感溫度動態尋找當下最接近時間點（非死拿第 0 筆）
+        // 精準尋找與當前系統時間最接近的體感溫度
         async function fetchHazardsAndApparentTemp(countyName) {
             const alertBox = document.getElementById('alertBox');
             alertBox.classList.add('hidden');
@@ -475,7 +480,7 @@
                 document.getElementById('sunriseTime').innerText = sRise;
                 document.getElementById('sunsetTime').innerText = sSet;
 
-                // 呼叫 F-D0047-089 API，精準比對當下時間
+                // 比對當下整點，精準抓取 F-D0047-089 的體感溫度
                 const forecastRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-D0047-089?Authorization=${API_KEY}&locationName=${encodeURIComponent(countyName)}`);
                 const forecastJson = await forecastRes.json();
                 
@@ -488,7 +493,6 @@
                             let matchedTimeObj = appTempEl.Time[0];
                             let minDiff = Infinity;
 
-                            // 尋找與當前系統時間差距最小的那一筆 Time 點
                             appTempEl.Time.forEach(t => {
                                 const tDate = new Date(t.DataTime);
                                 const diff = Math.abs(now - tDate);
@@ -583,7 +587,7 @@
             } catch (e) { tideContainer.innerHTML = '<div class="text-center py-6 text-red-400 text-sm">⚠️ 潮汐加載異常。</div>'; }
         }
 
-        // 需求 2 修正：呈現即時天氣，將角度數值轉換成中文風向，並移除數字前的重複指北針
+        // 呈現即時天氣，轉中文風向，純中文無重複符號
         function renderWeather(countyName, station) {
             const obsTime = station.ObsTime.DateTime ? station.ObsTime.DateTime.substring(11, 16) : '--:--';
             document.getElementById('weatherStation').innerText = `${countyName} (${station.StationName})`;
@@ -593,7 +597,6 @@
             document.getElementById('windSpeed').innerText = `${station.WeatherElement.WindSpeed} m/s`;
             document.getElementById('humidity').innerText = `${station.WeatherElement.RelativeHumidity} %`;
 
-            // 解析風向：若是角度數字則呼叫轉換函式轉中文，並淨化字串
             let windDirRaw = station.WeatherElement.WindDirection;
             let displayWindText = "";
 
@@ -605,13 +608,11 @@
                 displayWindText = '微風';
             }
 
-            // 直接填入純中文風向，前面不帶任何重複符號
             document.getElementById('windDirection').innerText = displayWindText;
 
             updateWeatherIconDisplay(station);
         }
 
-        // 角度轉風向中文工具
         function getWindDirectionText(degree) {
             if (degree >= 337.5 || degree < 22.5) return "北風";
             if (degree >= 22.5 && degree < 67.5) return "東北風";
