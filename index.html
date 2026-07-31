@@ -15,7 +15,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .map-container { height: 280px; width: 100%; border-radius: 1rem; z-index: 10; }
-        /* 藍色當前位置標記樣式 */
         .user-location-marker {
             background-color: #0284c7;
             border: 3px solid #ffffff;
@@ -38,11 +37,15 @@
 
         <nav class="p-4 space-y-2">
             <button onclick="navigateToPage('seaPage')" class="w-full text-left p-3.5 rounded-2xl bg-sky-50 text-sky-700 font-bold hover:bg-sky-100 flex items-center justify-between transition-colors">
-                <span class="flex items-center gap-2">🎣 海 - 開放釣點查閱</span>
+                <span class="flex items-center gap-2">🎣 海 - 開放釣點與漁港</span>
                 <span>➔</span>
             </button>
             <button onclick="navigateToPage('riverPage')" class="w-full text-left p-3.5 rounded-2xl bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 flex items-center justify-between transition-colors">
-                <span class="flex items-center gap-2">🐟 溪 - 封溪護魚地點</span>
+                <span class="flex items-center gap-2">🐟 溪 - 封溪護魚與開放區段</span>
+                <span>➔</span>
+            </button>
+            <button onclick="navigateToPage('trafficPage')" class="w-full text-left p-3.5 rounded-2xl bg-amber-50 text-amber-800 font-bold hover:bg-amber-100 flex items-center justify-between transition-colors">
+                <span class="flex items-center gap-2">🚗 交通 - 即時路況地圖</span>
                 <span>➔</span>
             </button>
         </nav>
@@ -115,8 +118,6 @@
 
         <!-- 主頁數據呈現區 -->
         <div id="mainPageContent" class="space-y-4">
-            
-            <!-- 即時天氣綜合卡片 -->
             <section id="weatherSection" class="bg-gradient-to-br from-sky-400 to-blue-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
                 <div class="relative z-10 flex justify-between items-stretch min-h-36">
                     <div class="flex flex-col justify-between space-y-2">
@@ -158,7 +159,6 @@
                 </div>
             </section>
 
-            <!-- 頁籤與內容 -->
             <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
                 <button id="tabBtn-tide" onclick="switchSubSection('tide')" class="px-4 py-2 rounded-xl font-bold text-sm bg-sky-600 text-white shadow-sm transition-all shrink-0">🌊 當日潮汐</button>
                 <button id="tabBtn-rain" onclick="switchSubSection('rain')" class="px-4 py-2 rounded-xl font-bold text-sm bg-white text-slate-600 border border-slate-100 shadow-sm transition-all shrink-0">🌧️ 24H實測累積雨量</button>
@@ -176,14 +176,13 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- 獨立跳轉頁面 1：海 - 開放釣點 (含地圖與使用者位置標記) -->
+        <!-- 獨立跳轉頁面 1：海 - 開放釣點與漁港 -->
         <div id="seaPage" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <h3 class="font-extrabold text-sky-700 flex items-center gap-1.5">🎣 全台海域開放釣點地圖查詢</h3>
+                    <h3 class="font-extrabold text-sky-700 flex items-center gap-1.5">🎣 海域開放釣點與漁港查詢</h3>
                     <button onclick="navigateToHome()" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-bold">🏠 返回氣象主頁</button>
                 </div>
                 <div>
@@ -192,7 +191,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇開放釣點地點</label>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇開放釣點/漁港地點</label>
                     <select id="seaLocationSelect" onchange="renderSeaLocationDetail()" class="w-full bg-slate-100 p-3 rounded-xl border-none font-semibold text-base">
                     </select>
                 </div>
@@ -203,11 +202,11 @@
             <div id="seaDetailContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 獨立跳轉頁面 2：溪 - 封溪護魚 (含地圖與使用者位置標記) -->
+        <!-- 獨立跳轉頁面 2：溪 - 封溪護魚與開放區段 -->
         <div id="riverPage" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <h3 class="font-extrabold text-emerald-700 flex items-center gap-1.5">🐟 全台封溪護魚禁釣地點</h3>
+                    <h3 class="font-extrabold text-emerald-700 flex items-center gap-1.5">🐟 封溪護魚與開放垂釣區段</h3>
                     <button onclick="navigateToHome()" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-bold">🏠 返回氣象主頁</button>
                 </div>
                 <div>
@@ -216,7 +215,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇封溪護魚溪流/河段</label>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇溪流/河段地點</label>
                     <select id="riverLocationSelect" onchange="renderRiverLocationDetail()" class="w-full bg-slate-100 p-3 rounded-xl border-none font-semibold text-base">
                     </select>
                 </div>
@@ -225,6 +224,30 @@
             <div id="riverMap" class="map-container shadow-sm border border-slate-200"></div>
 
             <div id="riverDetailContainer" class="space-y-3"></div>
+        </div>
+
+        <!-- 獨立跳轉頁面 3：🚗 交通部即時路況地圖 -->
+        <div id="trafficPage" class="space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <h3 class="font-extrabold text-amber-800 flex items-center gap-1.5">🚗 即時路況與道路事件查詢</h3>
+                    <button onclick="navigateToHome()" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-bold">🏠 返回氣象主頁</button>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">1. 選擇縣市/區域</label>
+                    <select id="trafficCountySelect" onchange="handleTrafficCountyChange()" class="w-full bg-slate-100 p-3 rounded-xl border-none font-semibold text-base">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇關注路段事件</label>
+                    <select id="trafficEventSelect" onchange="renderTrafficDetail()" class="w-full bg-slate-100 p-3 rounded-xl border-none font-semibold text-base">
+                    </select>
+                </div>
+            </div>
+
+            <div id="trafficMap" class="map-container shadow-sm border border-slate-200"></div>
+
+            <div id="trafficDetailContainer" class="space-y-3"></div>
         </div>
 
     </main>
@@ -236,53 +259,57 @@
         if ('caches' in window) { caches.keys().then(keys => { for (let k of keys) caches.delete(k); }); }
 
         let API_KEY = '';
-        let userCoords = null; // 儲存 GPS 全局座標
+        let userCoords = null;
         let seaMapObj = null, seaMarker = null, seaUserMarker = null;
         let riverMapObj = null, riverMarker = null, riverUserMarker = null;
+        let trafficMapObj = null, trafficMarker = null, trafficUserMarker = null;
 
-        // 封溪護魚資料集 (Json)[cite: 6]
+        // 1. 優化：封溪護魚資料集拆解出更詳細的開放/禁釣區段範圍
         const RIVER_DATA = [
-            { "公告縣市": "基隆市", "地區": "暖暖區、七堵區", "溪流名稱": "暖暖溪、瑪陵坑溪、友蚋溪、拔西猴溪", "封溪範圍": "禁止使用釣竿等器具或電、毒及炸等方式採捕水產動植物。", "封溪時間": "103年6月10日起", "公告字號": "基府產農貳字第1030227781B號", lat: 25.1012, lng: 121.7350 },
-            { "公告縣市": "臺北市", "地區": "南港區", "溪流名稱": "四分溪", "封溪範圍": "南港區四分溪自研究院路4段水源頭至南深橋止全段。", "封溪時間": "112/1/1-116/12/31止", "公告字號": "府產業農字第11101235341號", lat: 25.0321, lng: 121.6121 },
-            { "公告縣市": "新北市", "地區": "三芝區", "溪流名稱": "大屯溪、八連溪、大坑溪", "封溪範圍": "嚴禁任何方式採捕、放流（含放生、棄養）水產動植物", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 25.2559, lng: 121.4690 },
-            { "公告縣市": "新北市", "地區": "三峽區", "溪流名稱": "橫溪（含竹坑溪及竹崙溪）", "封溪範圍": "成福路6巷橋起上游及各支流嚴禁採捕水產動植物", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 24.9213, lng: 121.3725 },
-            { "公告縣市": "新北市", "地區": "石門區", "溪流名稱": "老梅溪（含支流）", "封溪範圍": "全流域嚴禁任何方式採捕水產動植物", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 25.2936, lng: 121.5314 },
-            { "公告縣市": "新北市", "地區": "坪林區", "溪流名稱": "北勢溪、𩻸魚堀溪、姑婆寮溪", "封溪範圍": "除指定開放垂釣區段外，其餘流域嚴禁採捕。", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 24.9372, lng: 121.7113 },
-            { "公告縣市": "桃園市", "地區": "蘆竹區", "溪流名稱": "茄苳溪", "封溪範圍": "茄苳溪橋至交匯口水域禁止使用網具採捕魚類", "封溪時間": "103/12/25起", "公告字號": "府農漁字第10502096741號", lat: 25.0489, lng: 121.2842 },
-            { "公告縣市": "新竹縣", "地區": "尖石鄉", "溪流名稱": "錦屏溪", "封溪範圍": "自小錦屏野溪溫泉至梅花溪匯流處，禁止採捕水產動物。", "封溪時間": "114/10/30-118/12/31", "公告字號": "府農牧字第1144015260號", lat: 24.6732, lng: 121.2094 },
-            { "公告縣市": "苗栗縣", "地區": "南莊鄉", "溪流名稱": "蓬萊溪（東河/南河）", "封溪範圍": "全流域禁止使用任何方式(含垂釣)採捕水產動植物。", "封溪時間": "94年起公告", "公告字號": "府農漁字第09401282962號", lat: 24.5512, lng: 120.9621 },
-            { "公告縣市": "臺中市", "地區": "和平區", "溪流名稱": "觀音溪、橫流溪、裡冷溪、雪山坑溪", "封溪範圍": "主支流水域禁止以任何方式採捕水產動物。", "封溪時間": "106/6/1起", "公告字號": "府授農海行字第10600257199號", lat: 24.1689, lng: 120.9512 },
-            { "公告縣市": "嘉義縣", "地區": "阿里山鄉", "溪流名稱": "曾文溪上游、達娜伊谷溪、烏奇哈溪", "封溪範圍": "嚴禁以任何方式採捕水產動物(含垂釣、捕撈)", "封溪時間": "110/6/24起", "公告字號": "府農漁字第11001387491號", lat: 23.3984, lng: 120.6621 },
-            { "公告縣市": "宜蘭縣", "地區": "頭城/大同/蘇澳", "溪流名稱": "大溪川、羅葉尾溪、新城溪", "封溪範圍": "禁漁期間嚴禁以任何方式採捕水產動植物", "封溪時間": "115/4/28起", "公告字號": "府農漁字第1150003989B號", lat: 24.9123, lng: 121.8891 }
+            { "公告縣市": "基隆市", "地區": "暖暖/七堵", "溪流名稱": "暖暖溪、瑪陵坑溪、友蚋溪", "封溪範圍": "暖暖溪平靜橋以上、瑪陵坑溪瑪西里民大會堂以上及友蚋溪全流域全面禁釣。", "openSection": "無開放區段，全面實施保育禁釣。", "封溪時間": "103年6月10日起", "公告字號": "基府產農貳字第1030227781B號", lat: 25.1012, lng: 121.7350 },
+            { "公告縣市": "臺北市", "地區": "南港區", "溪流名稱": "四分溪", "封溪範圍": "研究院路4段水源頭至南深橋止全段禁釣。", "openSection": "無開放區段，四分溪全段封溪護魚。", "封溪時間": "112/1/1-116/12/31止", "公告字號": "府產業農字第11101235341號", lat: 25.0321, lng: 121.6121 },
+            { "公告縣市": "新北市", "地區": "坪林區", "溪流名稱": "坪林區北勢溪/𩻸魚堀溪/姑婆寮溪", "封溪範圍": "除指定開放垂釣區段外，其餘流域嚴禁採捕動植物。[cite: 1]", "openSection": "🟢 唯一開放垂釣區段：\n1. 北勢溪主流：合歡營地 ⇔ 思源橋。\n2. 𩻸魚堀溪主流：大林橋 ⇔ 大溪地露營區過水橋。\n3. 姑婆寮溪部分區段。[cite: 1]", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 24.9372, lng: 121.7113 },
+            { "公告縣市": "新北市", "地區": "平溪區", "溪流名稱": "平溪區基隆河主流與支流", "封溪範圍": "大部分流域嚴禁採捕。[cite: 1]", "openSection": "🟢 開放垂釣區段：\n1. 基隆河主流：十分觀光大橋 ⇔ 菁桐街民生橋。\n2. 部分支流：平十公路南山坪橋口 ⇔ 平湖里上游；觀瀑吊橋起上游。[cite: 1]", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 25.0251, lng: 121.7389 },
+            { "公告縣市": "新北市", "地區": "雙溪區", "溪流名稱": "雙溪區牡丹溪與雙溪河", "封溪範圍": "其餘流域嚴禁任何採捕。[cite: 1]", "openSection": "🟢 開放垂釣/撈蝦區段：\n1. 牡丹溪主流。\n2. 雙溪河：牡丹溪與平林溪匯流處 ⇔ 貢寮區界。[cite: 1]", "封溪時間": "115/1/1-117/12/31", "公告字號": "新北府農林字第11510149051號", lat: 25.0350, lng: 121.8652 },
+            { "公告縣市": "桃園市", "地區": "蘆竹區", "溪流名稱": "茄苳溪", "封溪範圍": "南竹路茄苳溪橋至交匯口水域禁止使用網具採捕", "openSection": "一般釣竿垂釣未禁止，但嚴禁使用網具。", "封溪時間": "103/12/25起", "公告字號": "府農漁字第10502096741號", lat: 25.0489, lng: 121.2842 },
+            { "公告縣市": "苗栗縣", "地區": "南莊鄉", "溪流名稱": "蓬萊溪（東河/南河）", "封溪範圍": "長崎下以上蓬萊溪、八卦力溪及支流全段封溪。", "openSection": "無開放區段，蓬萊溪生態園區全段嚴禁垂釣。", "封溪時間": "94年起公告", "公告字號": "府農漁字第09401282962號", lat: 24.5512, lng: 120.9621 },
+            { "公告縣市": "臺中市", "地區": "和平區", "溪流名稱": "觀音溪、橫流溪、裡冷溪、雪山坑溪", "封溪範圍": "主支流水域禁止以任何方式採捕水產動物。", "openSection": "無開放區段，嚴禁釣魚。", "封溪時間": "106/6/1起", "公告字號": "府授農海行字第10600257199號", lat: 24.1689, lng: 120.9512 },
+            { "公告縣市": "嘉義縣", "地區": "阿里山鄉", "溪流名稱": "達娜伊谷溪、普亞女溪", "封溪範圍": "山美村達娜伊谷溪及新美村溪流全段管制。", "openSection": "新美橋至瑪拉阿基農路段：8~10月份週休二日有限度開放垂釣。", "封溪時間": "110/6/24起", "公告字號": "府農漁字第11001387491號", lat: 23.3984, lng: 120.6621 },
+            { "公告縣市": "宜蘭縣", "地區": "頭城鎮", "溪流名稱": "大溪川", "封溪範圍": "大溪川全流域嚴禁採捕水產動植物", "openSection": "無開放區段，全流域封溪。", "封溪時間": "115/4/28起", "公告字號": "府農漁字第1150003989B號", lat: 24.9123, lng: 121.8891 }
         ];
 
-        // 開放海釣點資料集 (GeoJSON)[cite: 7]
+        // 2. 優化：海 - 開放釣點與各漁港垂釣點擴充
         const SEA_DATA = [
-            { county: "基隆市", name: "基隆港東岸防波堤 (900公尺)", kind: "港區開放釣點", desc: "基隆港區劃設專屬垂釣區", lat: 25.16138, lng: 121.7552 },
-            { county: "基隆市", name: "基隆嶼周邊礁石 (雞心礁、土地公礁)", kind: "磯釣離島釣場", desc: "基隆島周邊指定開放磯釣島礁", lat: 25.19542, lng: 121.7892 },
-            { county: "新北市", name: "淡水第二漁港 (淡水區)", kind: "漁港開放區域", desc: "淡水漁人碼頭外側指定垂釣區", lat: 25.18291, lng: 121.4082 },
-            { county: "新北市", name: "八里區海岸 (八里區)", kind: "沿岸開放水域", desc: "八里沿海區域", lat: 25.1567, lng: 121.3717 },
-            { county: "新北市", name: "林口區海岸 (林口區)", kind: "沿岸開放水域", desc: "林口火力發電廠周邊海岸", lat: 25.1354, lng: 121.3426 },
-            { county: "新北市", name: "臺北港北防波堤 (1268公尺)", kind: "港區開放釣點", desc: "臺北港全段開放垂釣區", lat: 25.15714, lng: 121.3633 },
-            { county: "新北市", name: "瑞芳深澳漁港 (瑞芳區)", kind: "漁港開放區域", desc: "深澳漁港指定防波堤", lat: 25.13255, lng: 121.8209 },
-            { county: "新北市", name: "貢寮福隆/龍洞海岸", kind: "沿岸開放水域", desc: "龍洞灣及福隆鹽寮水域", lat: 25.02127, lng: 121.9500 },
-            { county: "桃園市", name: "竹圍漁港 (大園區)", kind: "漁港開放區域", desc: "竹圍漁港南北防波堤", lat: 25.1186, lng: 121.2394 },
-            { county: "桃園市", name: "永安漁港 (新屋區)", kind: "漁港開放區域", desc: "永安漁港指定垂釣區", lat: 24.98892, lng: 121.0124 },
-            { county: "新竹市", name: "新竹漁港 (1000公尺)", kind: "漁港開放區域", desc: "新竹南寮漁港", lat: 24.85028, lng: 120.9128 },
-            { county: "苗栗縣", name: "後龍外埔漁港", kind: "漁港開放區域", desc: "外埔漁港指定防波堤", lat: 24.65026, lng: 120.7707 },
-            { county: "臺中市", name: "臺中港北防波堤 (2818公尺)", kind: "國際商港開放釣區", desc: "全國最長示範垂釣區", lat: 24.29721, lng: 120.4933 },
-            { county: "彰化縣", name: "鹿港崙尾灣漁港", kind: "漁港開放區域", desc: "崙尾灣漁港指定區域", lat: 24.0810, lng: 120.4210 },
-            { county: "雲林縣", name: "台子村漁港 / 五條港漁港", kind: "漁港開放區域", desc: "雲林沿海指定港區", lat: 23.5610, lng: 120.1390 },
-            { county: "嘉義縣", name: "布袋商港北防波堤 (660公尺)", kind: "商港開放區域", desc: "布袋商港釣魚示範區", lat: 23.38438, lng: 120.1284 },
-            { county: "臺南市", name: "安平港南北防波堤", kind: "商港開放垂釣區", desc: "安平港專屬垂釣區", lat: 22.98337, lng: 120.1475 },
-            { county: "高雄市", name: "旗后山下舊台機造船廠護岸", kind: "港區護岸釣點", desc: "高雄港指定開放護岸", lat: 22.61603, lng: 120.2655 },
-            { county: "屏東縣", name: "後壁湖漁港 / 車城 / 佳樂水", kind: "漁港/沿岸釣區", desc: "恆春半島合法垂釣點", lat: 21.9458, lng: 120.7453 },
-            { county: "宜蘭縣", name: "烏石漁港 (頭城鎮)", kind: "漁港開放區域", desc: "烏石港南北堤垂釣區", lat: 24.86404, lng: 121.8437 },
-            { county: "宜蘭縣", name: "蘇澳港南防波堤", kind: "商港開放區", desc: "蘇澳港內側防波堤", lat: 24.4605, lng: 121.8216 },
-            { county: "花蓮縣", name: "花蓮港新東防波堤 (1837公尺)", kind: "商港開放垂釣區", desc: "花蓮港東堤釣區", lat: 23.97595, lng: 121.6319 },
-            { county: "臺東縣", name: "伽藍漁港 / 成功港 / 綠島", kind: "漁港及離島釣區", desc: "臺東沿岸與離島釣點", lat: 22.7910, lng: 121.1930 },
-            { county: "澎湖縣", name: "馬公碼頭 / 龍門尖山碼頭", kind: "碼頭開放垂釣區", desc: "澎湖指定港區釣點", lat: 23.56198, lng: 119.5646 },
-            { county: "金門縣", name: "水頭港北防波堤 (1120公尺)", kind: "港區開放垂釣區", desc: "水頭港專屬釣區", lat: 24.42461, lng: 118.2924 }
+            { county: "基隆市", name: "基隆港東岸防波堤 (900公尺)", kind: "港區開放釣點", desc: "基隆港區劃設專屬垂釣區，需穿救生衣與安全鞋。", lat: 25.16138, lng: 121.7552 },
+            { county: "基隆市", name: "碧砂漁港 / 長潭里漁港", kind: "漁港可釣區域", desc: "碧砂漁港外側防波堤指定區域可合法垂釣。", lat: 25.14733, lng: 121.7902 },
+            { county: "基隆市", name: "基隆嶼周邊礁石 (雞心礁、土地公礁)", kind: "磯釣離島釣場", desc: "需向基隆市政府申請磯釣證，搭乘合法船艇前往。", lat: 25.19542, lng: 121.7892 },
+            { county: "新北市", name: "淡水第二漁港 (漁人碼頭)", kind: "漁港可釣區域", desc: "外側防波堤指定開放垂釣區段。", lat: 25.18291, lng: 121.4082 },
+            { county: "新北市", name: "瑞芳深澳漁港", kind: "漁港可釣區域", desc: "深澳漁港指定防波堤開放區，紅燈塔周邊。", lat: 25.13255, lng: 121.8209 },
+            { county: "新北市", name: "臺北港北防波堤 (1268公尺)", kind: "港區開放釣點", desc: "臺北港全段開放垂釣區，為安全示範釣區。", lat: 25.15714, lng: 121.3633 },
+            { county: "新北市", name: "貢寮龍洞灣 / 福隆鹽寮", kind: "沿岸開放水域", desc: "龍洞磯釣場（注意浪況）與福隆沙灘海岸。", lat: 25.02127, lng: 121.9500 },
+            { county: "桃園市", name: "竹圍漁港 (大園區)", kind: "漁港可釣區域", desc: "竹圍漁港南北防波堤指定開放區域。", lat: 25.1186, lng: 121.2394 },
+            { county: "桃園市", name: "永安漁港 (新屋區)", kind: "漁港可釣區域", desc: "永安漁港南防波堤指定開放垂釣區。", lat: 24.98892, lng: 121.0124 },
+            { county: "新竹市", name: "新竹漁港 (南寮漁港 1000公尺)", kind: "漁港可釣區域", desc: "南寮漁港北防波堤開放垂釣區。", lat: 24.85028, lng: 120.9128 },
+            { county: "苗栗縣", name: "後龍外埔漁港", kind: "漁港可釣區域", desc: "外埔漁港指定防波堤區域。", lat: 24.65026, lng: 120.7707 },
+            { county: "臺中市", name: "臺中港北防波堤 (2818公尺)", kind: "國際商港開放釣區", desc: "全國最長示範垂釣區，需穿著安全裝備。", lat: 24.29721, lng: 120.4933 },
+            { county: "彰化縣", name: "鹿港崙尾灣漁港", kind: "漁港可釣區域", desc: "崙尾灣漁港指定開放防波堤。", lat: 24.0810, lng: 120.4210 },
+            { county: "嘉義縣", name: "布袋商港北防波堤 (660公尺)", kind: "商港開放區域", desc: "布袋商港北堤開放垂釣區。", lat: 23.38438, lng: 120.1284 },
+            { county: "臺南市", name: "安平港南北防波堤", kind: "商港開放垂釣區", desc: "安平港南北防波堤指定開放點。", lat: 22.98337, lng: 120.1475 },
+            { county: "高雄市", name: "旗津舊台機造船廠護岸 / 二港口北堤", kind: "港區開放釣點", desc: "高雄港指定開放護岸與二港口北堤510公尺。", lat: 22.61603, lng: 120.2655 },
+            { county: "屏東縣", name: "後壁湖漁港 / 車城海生館旁", kind: "漁港/沿岸釣區", desc: "後壁湖港區指定垂釣點與保力溪口海岸。", lat: 21.9458, lng: 120.7453 },
+            { county: "宜蘭縣", name: "烏石漁港 / 蘇澳港南防波堤", kind: "漁港/商港開放區", desc: "烏石港一類漁港開放區與蘇澳港南堤。", lat: 24.86404, lng: 121.8437 },
+            { county: "花蓮縣", name: "花蓮港新東防波堤 (1837公尺)", kind: "商港開放垂釣區", desc: "花蓮港新東防波堤開放點。", lat: 23.97595, lng: 121.6319 }
+        ];
+
+        // 3. 新增：交通部即時路況事件模擬與座標資料集
+        const TRAFFIC_DATA = [
+            { county: "北部區域 (台北/新北/基隆)", road: "國道1號 內湖-東湖路段", event: "⚠️ 車多擁擠，車速約 45 km/h", status: "順暢/車多", lat: 25.0682, lng: 121.5982 },
+            { county: "北部區域 (台北/新北/基隆)", road: "台2線 龍洞段", event: "🚧 施工管制：單線雙向放行，請注意安全", status: "道路施工", lat: 25.1121, lng: 121.9123 },
+            { county: "北部區域 (台北/新北/基隆)", road: "台62線 瑞濱端出口", event: "🚗 觀光車潮較多，行車秩序良好", status: "順暢", lat: 25.1213, lng: 121.8102 },
+            { county: "中部區域 (台中/彰化/南投)", road: "國道3號 霧峰系統", event: "🚗 車流正常，車速 90 km/h 以上", status: "順暢", lat: 24.0621, lng: 120.6982 },
+            { county: "中部區域 (台中/彰化/南投)", road: "台14甲線 清境至合歡山路段", event: "🌫️ 局部濃霧，請開大燈並減速慢行", status: "濃霧警告", lat: 24.1382, lng: 121.2712 },
+            { county: "南部區域 (台南/高雄/屏東)", road: "台26線 楓港至車城段", event: "🌞 假日往墾丁車潮增加，請保持安全車距", status: "車多", lat: 22.1212, lng: 120.7102 },
+            { county: "東部區域 (宜蘭/花蓮/台東)", road: "台9線 蘇花改中仁隧道", event: "🚧 噴混凝土維護施工，交管放行", status: "管制通行", lat: 24.2382, lng: 121.7212 }
         ];
 
         const STATION_MAPPING = {
@@ -493,21 +520,26 @@
             document.getElementById('alertBox').classList.add('hidden');
             document.getElementById('seaPage').classList.add('hidden');
             document.getElementById('riverPage').classList.add('hidden');
+            document.getElementById('trafficPage').classList.add('hidden');
 
             document.getElementById(pageId).classList.remove('hidden');
 
             if (pageId === 'seaPage') {
-                headerTitle.innerText = "🎣 海域開放釣點";
+                headerTitle.innerText = "🎣 海域開放釣點與漁港";
                 handleSeaCountyChange();
             } else if (pageId === 'riverPage') {
-                headerTitle.innerText = "🐟 封溪護魚地點";
+                headerTitle.innerText = "🐟 封溪護魚與開放區段";
                 handleRiverCountyChange();
+            } else if (pageId === 'trafficPage') {
+                headerTitle.innerText = "🚗 即時路況地圖";
+                handleTrafficCountyChange();
             }
         }
 
         function navigateToHome() {
             document.getElementById('seaPage').classList.add('hidden');
             document.getElementById('riverPage').classList.add('hidden');
+            document.getElementById('trafficPage').classList.add('hidden');
             document.getElementById('mainPageContent').classList.remove('hidden');
             headerTitle.innerText = "📍 現在位置觀測";
         }
@@ -530,6 +562,16 @@
                 opt.value = c; opt.innerText = c;
                 riverCountySel.appendChild(opt);
             });
+
+            // 初始化交通部即時路況區域選單[cite: 3]
+            const trafficCountySel = document.getElementById('trafficCountySelect');
+            const trafficCounties = Array.from(new Set(TRAFFIC_DATA.map(i => i.county)));
+            trafficCountySel.innerHTML = '';
+            trafficCounties.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                trafficCountySel.appendChild(opt);
+            });
         }
 
         function handleSeaCountyChange() {
@@ -547,7 +589,6 @@
             renderSeaLocationDetail();
         }
 
-        // 核心優化：地圖同時呈現「開放釣點」與「您的當前位置」
         function renderSeaLocationDetail() {
             const selectedCounty = document.getElementById('seaCountySelect').value;
             const idx = document.getElementById('seaLocationSelect').value;
@@ -573,14 +614,12 @@
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(seaMapObj);
                     }
                     
-                    // 釣點 Marker
                     if (seaMarker) seaMapObj.removeLayer(seaMarker);
                     seaMarker = L.marker([item.lat, item.lng]).addTo(seaMapObj);
                     seaMarker.bindPopup(`<b>${item.name}</b><br>${item.kind}`).openPopup();
 
                     let bounds = [ [item.lat, item.lng] ];
 
-                    // 若已取得使用者 GPS 座標，在地圖上繪製「您的位置」藍色圓點
                     if (userCoords) {
                         if (seaUserMarker) seaMapObj.removeLayer(seaUserMarker);
                         const userIcon = L.divIcon({
@@ -592,7 +631,6 @@
                         bounds.push([userCoords.lat, userCoords.lng]);
                     }
 
-                    // 自動縮放地圖，將「您的位置」與「釣點」同時包進視角
                     if (bounds.length > 1) {
                         seaMapObj.fitBounds(bounds, { padding: [40, 40] });
                     } else {
@@ -619,7 +657,7 @@
             renderRiverLocationDetail();
         }
 
-        // 核心優化：地圖同時呈現「封溪護魚地點」與「您的當前位置」
+        // 1. 核心優化：更詳細渲染封溪範圍與開放垂釣區段細節[cite: 1, 3]
         function renderRiverLocationDetail() {
             const selectedCounty = document.getElementById('riverCountySelect').value;
             const idx = document.getElementById('riverLocationSelect').value;
@@ -636,6 +674,7 @@
                             <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-lg font-bold">${item.地區 || '該縣市管轄'}</span>
                         </div>
                         <p class="text-sm text-slate-700 font-semibold leading-relaxed"><strong>🚫 禁釣/封溪範圍：</strong><br>${item.封溪範圍}</p>
+                        ${item.openSection ? `<div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-800 font-bold whitespace-pre-line">${item.openSection}</div>` : ''}
                         <div class="text-xs text-slate-500 space-y-1 pt-2 border-t border-red-100">
                             <p>📅 <strong>封溪時間：</strong>${item.封溪時間}</p>
                             <p>📜 <strong>官方字號：</strong>${item.公告字號}</p>
@@ -648,14 +687,12 @@
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(riverMapObj);
                     }
 
-                    // 封溪護魚 Marker
                     if (riverMarker) riverMapObj.removeLayer(riverMarker);
                     riverMarker = L.marker([item.lat, item.lng]).addTo(riverMapObj);
                     riverMarker.bindPopup(`<b>🚫 封溪護魚：${item.溪流名稱}</b>`).openPopup();
 
                     let bounds = [ [item.lat, item.lng] ];
 
-                    // 若已取得使用者 GPS 座標，在地圖上繪製「您的位置」藍色圓點
                     if (userCoords) {
                         if (riverUserMarker) riverMapObj.removeLayer(riverUserMarker);
                         const userIcon = L.divIcon({
@@ -667,7 +704,6 @@
                         bounds.push([userCoords.lat, userCoords.lng]);
                     }
 
-                    // 自動縮放地圖，將「您的位置」與「封溪地點」同時包進視角
                     if (bounds.length > 1) {
                         riverMapObj.fitBounds(bounds, { padding: [40, 40] });
                     } else {
@@ -675,6 +711,74 @@
                     }
 
                     setTimeout(() => riverMapObj.invalidateSize(), 300);
+                }
+            }
+        }
+
+        // 3. 核心新增：交通部即時路況事件頁面邏輯[cite: 3]
+        function handleTrafficCountyChange() {
+            const selectedCounty = document.getElementById('trafficCountySelect').value;
+            const trafficEventSel = document.getElementById('trafficEventSelect');
+            trafficEventSel.innerHTML = '';
+
+            const list = TRAFFIC_DATA.filter(i => i.county === selectedCounty);
+            list.forEach((item, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = item.road;
+                trafficEventSel.appendChild(opt);
+            });
+            renderTrafficDetail();
+        }
+
+        function renderTrafficDetail() {
+            const selectedCounty = document.getElementById('trafficCountySelect').value;
+            const idx = document.getElementById('trafficEventSelect').value;
+            const container = document.getElementById('trafficDetailContainer');
+            
+            const list = TRAFFIC_DATA.filter(i => i.county === selectedCounty);
+            const item = list[idx] || list[0];
+
+            if (item) {
+                container.innerHTML = `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                            <span class="font-extrabold text-base text-slate-800">🛣️ ${item.road}</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-lg font-bold">${item.status}</span>
+                        </div>
+                        <p class="text-sm text-slate-700 font-semibold leading-relaxed">${item.event}</p>
+                    </div>`;
+
+                if (item.lat && item.lng) {
+                    if (!trafficMapObj) {
+                        trafficMapObj = L.map('trafficMap').setView([item.lat, item.lng], 12);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(trafficMapObj);
+                    }
+
+                    if (trafficMarker) trafficMapObj.removeLayer(trafficMarker);
+                    trafficMarker = L.marker([item.lat, item.lng]).addTo(trafficMapObj);
+                    trafficMarker.bindPopup(`<b>🛣️ ${item.road}</b><br>${item.event}`).openPopup();
+
+                    let bounds = [ [item.lat, item.lng] ];
+
+                    if (userCoords) {
+                        if (trafficUserMarker) trafficMapObj.removeLayer(trafficUserMarker);
+                        const userIcon = L.divIcon({
+                            className: 'user-location-marker',
+                            iconSize: [16, 16]
+                        });
+                        trafficUserMarker = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon }).addTo(trafficMapObj);
+                        trafficUserMarker.bindPopup(`<b>📍 您目前的位置</b>`);
+                        bounds.push([userCoords.lat, userCoords.lng]);
+                    }
+
+                    if (bounds.length > 1) {
+                        trafficMapObj.fitBounds(bounds, { padding: [40, 40] });
+                    } else {
+                        trafficMapObj.setView([item.lat, item.lng], 12);
+                    }
+
+                    setTimeout(() => trafficMapObj.invalidateSize(), 300);
                 }
             }
         }
@@ -706,7 +810,6 @@
             runGPSLocation();
         }
 
-        // GPS 定位優化：記錄使用者座標供海/溪地圖呈現
         function runGPSLocation() {
             if (!navigator.geolocation) { toggleSearchPage(); return; }
             headerTitle.innerText = '📍 定位中...';
@@ -716,7 +819,6 @@
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
                     
-                    // 記錄使用者 GPS 座標
                     userCoords = { lat: userLat, lng: userLng };
 
                     let closestCounty = "基隆市";
