@@ -45,7 +45,7 @@
                 <span>➔</span>
             </button>
             <button onclick="navigateToPage('trafficPage')" class="w-full text-left p-3.5 rounded-2xl bg-amber-50 text-amber-800 font-bold hover:bg-amber-100 flex items-center justify-between transition-colors">
-                <span class="flex items-center gap-2">🚗 交通 - 全台即時路況地圖</span>
+                <span class="flex items-center gap-2">🚗 交通 - 南北/東西向國道與快速道路</span>
                 <span>➔</span>
             </button>
         </nav>
@@ -226,11 +226,11 @@
             <div id="riverDetailContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 獨立跳轉頁面 3：🚗 全台 22 縣市獨立即時路況查詢 -->
+        <!-- 獨立跳轉頁面 3：🚗 全台南北向/東西向國道與快速道路即時路況 -->
         <div id="trafficPage" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <h3 class="font-extrabold text-amber-800 flex items-center gap-1.5">🚗 全台主要道路即時路況</h3>
+                    <h3 class="font-extrabold text-amber-800 flex items-center gap-1.5">🚗 南北/東西向國道與快速道路路況</h3>
                     <button onclick="navigateToHome()" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md text-slate-600 font-bold">🏠 返回氣象主頁</button>
                 </div>
                 <div>
@@ -239,7 +239,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇查詢道路/國道/省道/高架</label>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">2. 選擇查詢國道/東西向快速道路/省道區段</label>
                     <select id="trafficEventSelect" onchange="renderTrafficDetail()" class="w-full bg-slate-100 p-3 rounded-xl border-none font-semibold text-base">
                     </select>
                 </div>
@@ -317,48 +317,84 @@
             { county: "花蓮縣", name: "花蓮港新東防波堤 (1837公尺)", kind: "商港開放垂釣區", desc: "花蓮港新東防波堤開放點。", lat: 23.97595, lng: 121.6319 }
         ];
 
-        // 1. 全台灣 22 縣市完整主要道路即時路況狀況（車速/等級）與獨立事件資料庫大擴充
+        // 1. 全台南北向與「東西向國道/快速道路分區段」即時路況資料庫擴充
         const TRAFFIC_DATA = [
-            { county: "基隆市", road: "台62線 瑞濱端/基隆港端", speed: "65 km/h", level: "🟢 全線順暢", event: "無特殊路況事件，車流正常", lat: 25.1213, lng: 121.8102 },
-            { county: "基隆市", road: "基隆市區 中正路 / 基金一路", speed: "42 km/h", level: "🟢 順暢", event: "往東岸高架橋方向行車順暢", lat: 25.1321, lng: 121.7452 },
-            { county: "臺北市", road: "忠孝東路/忠孝西路 全線", speed: "48 km/h", level: "🟢 市區順暢", event: "車流正常，多向紅綠燈正常運作", lat: 25.0421, lng: 121.5321 },
-            { county: "臺北市", road: "仁愛路 / 信義路 幹線", speed: "45 km/h", level: "🟢 車流順暢", event: "公車專用道與慢車道順暢", lat: 25.0382, lng: 121.5482 },
-            { county: "臺北市", road: "南京東路 / 民生東路", speed: "40 km/h", level: "🟢 車流順暢", event: "捷運沿線車流正常", lat: 25.0521, lng: 121.5421 },
-            { county: "臺北市", road: "中山北路 / 敦化南北路", speed: "42 km/h", level: "🟢 車流順暢", event: "綠蔭大道雙向車流順暢", lat: 25.0621, lng: 121.5221 },
-            { county: "臺北市", road: "基隆路 / 基隆路高架橋", speed: "38 km/h", level: "🟡 車多緩慢", event: "⚠️ 匝道匯入車流較多，請保持車距", lat: 25.0282, lng: 121.5582 },
-            { county: "臺北市", road: "市民高架道路 / 環東大道", speed: "52 km/h", level: "🟡 車流稍多", event: "🚧 建國北路匝道夜間路面銑鋪施工", lat: 25.0442, lng: 121.5381 },
-            { county: "臺北市", road: "建國高架 / 新生高架道路", speed: "50 km/h", level: "🟢 順暢", event: "南北向銜接圓山交流道順暢", lat: 25.0582, lng: 121.5351 },
-            { county: "臺北市", road: "洲美快速道路 / 大度路", speed: "70 km/h", level: "🟢 全線順暢", event: "往北投關渡淡水方向車流順暢", lat: 25.1121, lng: 121.5021 },
-            { county: "臺北市", road: "國道1號 內湖-東湖高架段", speed: "42 km/h", level: "🟡 尖峰車多", event: "⚠️ 尖峰時段車流較多，請保持車距", lat: 25.0682, lng: 121.5982 },
-            { county: "新北市", road: "板橋文化路 / 縣民大道", speed: "45 km/h", level: "🟢 順暢", event: "板橋新站特區周邊車流順暢", lat: 25.0132, lng: 121.4652 },
-            { county: "新北市", road: "新店環河快速道路", speed: "65 km/h", level: "🟢 順暢", event: "往台北市區與碧潭方向正常", lat: 24.9682, lng: 121.5321 },
-            { county: "新北市", road: "台64線 八里新店快速道路", speed: "78 km/h", level: "🟢 全線順暢", event: "隧道內車流正常，請開啟頭燈", lat: 24.9921, lng: 121.5123 },
-            { county: "新北市", road: "台65線 板橋土城快速道路", speed: "72 km/h", level: "🟢 全線順暢", event: "銜接國道3號土城交流道正常", lat: 24.9821, lng: 121.4321 },
-            { county: "新北市", road: "台2線 龍洞/福隆沿海段", speed: "35 km/h", level: "🟠 施工管制", event: "🚧 邊坡防護工程：實施單線雙向放行", lat: 25.1121, lng: 121.9123 },
-            { county: "桃園市", road: "桃園市中正路 / 春日路 / 經國路", speed: "42 km/h", level: "🟢 順暢", event: "往藝文特區與交流道順暢", lat: 25.0021, lng: 121.3121 },
-            { county: "桃園市", road: "國道2號 桃園機場/竹圍段", speed: "92 km/h", level: "🟢 全線順暢", event: "往機場與大園方向行車順暢", lat: 25.0812, lng: 121.2182 },
-            { county: "新竹市", road: "光復路 / 公道五路 / 慈雲路", speed: "40 km/h", level: "🟢 順暢", event: "往竹科園區道路車流正常", lat: 24.7982, lng: 120.9982 },
-            { county: "新竹市", road: "台68線 東西向快速道路", speed: "80 km/h", level: "🟢 全線順暢", event: "往新竹漁港方向車流順暢", lat: 24.8421, lng: 120.9312 },
-            { county: "新竹縣", road: "國道1號 竹北-新竹路段", speed: "58 km/h", level: "🟡 尖峰車多", event: "科技園區上下班車多，請小心駕駛", lat: 24.8282, lng: 121.0021 },
-            { county: "苗栗縣", road: "台13線 / 國道3號 後龍通霄段", speed: "105 km/h", level: "🟢 全線極順暢", event: "無特殊路況事件，路況良好", lat: 24.5821, lng: 120.8021 },
-            { county: "臺中市", road: "台灣大道 (原中港路)", speed: "45 km/h", level: "🟢 順暢", event: "公車專用道與慢車道順暢", lat: 24.1621, lng: 120.6482 },
-            { county: "臺中市", road: "文心路 / 環中路 幹道", speed: "42 km/h", level: "🟢 順暢", event: "捷運綠線沿線車流正常", lat: 24.1521, lng: 120.6521 },
-            { county: "臺中市", road: "台74線 台中環線 (梧棲/清水段)", speed: "75 km/h", level: "🟢 全線順暢", event: "往台中港與高鐵站方向車流正常", lat: 24.2512, lng: 120.5512 },
-            { county: "彰化縣", road: "中山路 / 金馬路 / 國道1號彰化段", speed: "68 km/h", level: "🟡 車流稍多", event: "觀光車潮增加，請維持安全車距", lat: 24.0321, lng: 120.5123 },
-            { county: "南投縣", road: "台14甲線 清境至合歡山路段", speed: "30 km/h", level: "🌫️ 濃霧減速", event: "🌫️ 山區局部濃霧，請開大燈減速慢行", lat: 24.1382, lng: 121.2712 },
-            { county: "雲林縣", road: "斗六大學路 / 台61線 西濱麥寮段", speed: "85 km/h", level: "🟢 全線順暢", event: "🌬️ 沿海側風較強，大型車請注意安全", lat: 23.7821, lng: 120.1821 },
-            { county: "嘉義市", road: "世賢路地下道 / 忠孝路", speed: "50 km/h", level: "🟢 全線順暢", event: "市區主要幹道行車秩序良好", lat: 23.4812, lng: 120.4412 },
-            { county: "嘉義縣", road: "台82線 快速道路 (布袋端)", speed: "88 km/h", level: "🟢 全線順暢", event: "往布袋商港方向車流正常", lat: 23.3882, lng: 120.1512 },
-            { county: "臺南市", road: "中華東路/西路 / 台86線快速道路", speed: "82 km/h", level: "🟢 全線順暢", event: "往安平港與黃金海岸車流正常", lat: 22.9282, lng: 120.1812 },
-            { county: "高雄市", road: "中山路 / 博愛路 / 民族路", speed: "45 km/h", level: "🟢 順暢", event: "市區南北向主要幹道車流正常", lat: 22.6321, lng: 120.3021 },
-            { county: "高雄市", road: "高雄港過港隧道", speed: "45 km/h", level: "🟡 限高正常", event: "貨櫃車流量較多，請依速限行駛", lat: 22.5682, lng: 120.3082 },
-            { county: "屏東縣", road: "台26線 楓港至車城/恆春段 (屏鵝公路)", speed: "70 km/h", level: "🟢 全線順暢", event: "往墾丁方向車流順暢良好", lat: 22.1212, lng: 120.7102 },
-            { county: "宜蘭縣", road: "國道5號 雪山隧道頭城段", speed: "75 km/h", level: "🟢 隧道順暢", event: "隧道內雙向車速維持 70~80 km/h", lat: 24.8782, lng: 121.7882 },
-            { county: "花蓮縣", road: "台9線 蘇花改中仁隧道", speed: "40 km/h", level: "🚧 施工交管", event: "🚧 噴混凝土維護施工，實施單線放行", lat: 24.2382, lng: 121.7212 },
-            { county: "臺東縣", road: "台9線 南迴公路 (金崙高架橋)", speed: "65 km/h", level: "🟢 全線順暢", event: "景觀高架橋路段車流順暢", lat: 22.5282, lng: 120.9682 },
-            { county: "澎湖縣", road: "跨海大橋 (縣道203線)", speed: "50 km/h", level: "💨 陣風偏大", event: "💨 橋面陣風較大，機車請減速", lat: 23.6482, lng: 119.5582 },
-            { county: "金門縣", road: "金門大橋 (金城至烈嶼)", speed: "60 km/h", level: "🟢 全線順暢", event: "全線行車正常，請遵守速限 60 km/h", lat: 24.4482, lng: 118.2782 },
-            { county: "連江縣", road: "南竿福澳港連外道路", speed: "30 km/h", level: "🟢 全線順暢", event: "陡坡路段行車請注意用檔", lat: 26.1582, lng: 119.9382 }
+            // 基隆市
+            { county: "基隆市", road: "國道1號 (基隆-五堵區段)", speed: "75 km/h", level: "🟢 全線順暢", event: "無特殊路況事件，車流正常", lat: 25.1082, lng: 121.7212 },
+            { county: "基隆市", road: "台62線 萬瑞快速道路 [東西向] (大華系統-瑞濱區段)", speed: "68 km/h", level: "🟢 全線順暢", event: "往港區貨櫃車流量正常，行車秩序良好", lat: 25.1213, lng: 121.8102 },
+            
+            // 臺北市
+            { county: "臺北市", road: "國道1號 (內湖-圓山高架區段)", speed: "42 km/h", level: "🟡 尖峰車多", event: "⚠️ 尖峰車流較多，請維持安全車距", lat: 25.0682, lng: 121.5982 },
+            { county: "臺北市", road: "市民高架道路 / 環東大道 [東西向] (環東-建國北路區段)", speed: "52 km/h", level: "🟡 車流稍多", event: "🚧 建國北路匝道夜間路面銑鋪施工", lat: 25.0442, lng: 121.5381 },
+            { county: "臺北市", road: "建國高架 / 新生高架道路全區段", speed: "50 km/h", level: "🟢 順暢", event: "南北向銜接圓山交流道順暢", lat: 25.0582, lng: 121.5351 },
+            { county: "臺北市", road: "洲美快速道路 [東西向] (大度路-社子區段)", speed: "70 km/h", level: "🟢 全線順暢", event: "往北投關渡淡水方向車流順暢", lat: 25.1121, lng: 121.5021 },
+            { county: "臺北市", road: "忠孝東西路 / 仁愛路 / 信義路 幹線區段", speed: "45 km/h", level: "🟢 市區順暢", event: "市區主要東西向幹道車流正常", lat: 25.0421, lng: 121.5321 },
+
+            // 新北市
+            { county: "新北市", road: "國道3號 (土城-木柵高架區段)", speed: "80 km/h", level: "🟢 全線順暢", event: "車流正常，中和交流道引道順暢", lat: 24.9821, lng: 121.4812 },
+            { county: "新北市", road: "台64線 八里新店快速道路 [東西向] (八里-板橋區段)", speed: "78 km/h", level: "🟢 全線順暢", event: "觀音山隧道內車流正常，請開啟頭燈", lat: 24.9921, lng: 121.5123 },
+            { county: "新北市", road: "台65線 板橋土城快速道路 [南北/東西向] (五股-土城區段)", speed: "72 km/h", level: "🟢 全線順暢", event: "銜接國道3號土城交流道正常", lat: 24.9821, lng: 121.4321 },
+            { county: "新北市", road: "台2線 濱海公路 [東西向] (龍洞-福隆沿海區段)", speed: "35 km/h", level: "🟠 邊坡施工", event: "🚧 邊坡防護工程：實施單線雙向號誌管制放行", lat: 25.1121, lng: 121.9123 },
+
+            // 桃園市
+            { county: "桃園市", road: "國道2號 桃園環線 [東西向] (大園-機場-桃園交流道區段)", speed: "92 km/h", level: "🟢 全線順暢", event: "往桃園國際機場與竹圍方向順暢", lat: 25.0812, lng: 121.2182 },
+            { county: "桃園市", road: "台66線 觀音大溪快速道路 [東西向] (觀音-平鎮區段)", speed: "82 km/h", level: "🟢 全線順暢", event: "東西向快速道路車流正常", lat: 24.9382, lng: 121.1821 },
+            { county: "桃園市", road: "國道1號 (林口-中壢區段)", speed: "62 km/h", level: "🟡 車流稍多", event: "桃園交流道出口車流稍多", lat: 25.0121, lng: 121.2982 },
+
+            // 新竹縣市
+            { county: "新竹市", road: "台68線 東西向快速道路 [東西向] (南寮-竹東區段)", speed: "80 km/h", level: "🟢 全線順暢", event: "往新竹漁港與南寮方向車流順暢", lat: 24.8421, lng: 120.9312 },
+            { county: "新竹縣", road: "國道1號 (湖口-竹北高架區段)", speed: "58 km/h", level: "🟡 尖峰車多", event: "科技園區上下班車多，請小心駕駛", lat: 24.8282, lng: 121.0021 },
+
+            // 苗栗縣
+            { county: "苗栗縣", road: "台72線 後龍汶水快速道路 [東西向] (後龍-出礦坑區段)", speed: "85 km/h", level: "🟢 全線順暢", event: "往大湖南莊觀光車流正常", lat: 24.5121, lng: 120.8612 },
+            { county: "苗栗縣", road: "國道3號 (後龍-通霄區段)", speed: "105 km/h", level: "🟢 全線極順暢", event: "無特殊路況事件，路況極佳", lat: 24.5821, lng: 120.8021 },
+
+            // 臺中市
+            { county: "臺中市", road: "國道4號 台中環線 [東西向] (清水-豐原區段)", speed: "88 km/h", level: "🟢 全線順暢", event: "銜接國道1號與國道3號系統流暢", lat: 24.2612, lng: 120.6121 },
+            { county: "臺中市", road: "台74線 台中環線 [東西向] (快官-霧峰區段)", speed: "75 km/h", level: "🟢 全線順暢", event: "銜接國道3號與高鐵站方向車流正常", lat: 24.1121, lng: 120.6121 },
+            { county: "臺中市", road: "台灣大道 [東西向幹道區段]", speed: "45 km/h", level: "🟢 順暢", event: "公車專用道與慢車道順暢", lat: 24.1621, lng: 120.6482 },
+
+            // 彰化縣
+            { county: "彰化縣", road: "台76線 漢寶草屯快速道路 [東西向] (埔鹽-員林區段)", speed: "82 km/h", level: "🟢 全線順暢", event: "八卦山隧道內車流正常", lat: 23.9682, lng: 120.5821 },
+            { county: "彰化縣", road: "國道1號 (彰化-埔鹽系統區段)", speed: "68 km/h", level: "🟡 車流稍多", event: "觀光車潮增加，請維持安全車距", lat: 24.0321, lng: 120.5123 },
+
+            // 南投縣
+            { county: "南投縣", road: "國道6號 水沙連高速公路 [東西向] (霧峰系統-埔里區段)", speed: "90 km/h", level: "🟢 全線順暢", event: "國道東向往日月潭與清境順暢", lat: 23.9821, lng: 120.8121 },
+            { county: "南投縣", road: "台14甲線 (清境至合歡山高峰區段)", speed: "30 km/h", level: "🌫️ 濃霧減速", event: "🌫️ 山區局部濃霧，請開大燈減速慢行", lat: 24.1382, lng: 121.2712 },
+
+            // 雲林縣
+            { county: "雲林縣", road: "台78線 台西古坑快速道路 [東西向] (台西-古坑區段)", speed: "88 km/h", level: "🟢 全線順暢", event: "全線行車流暢，無施工管制", lat: 23.6821, lng: 120.4121 },
+            { county: "雲林縣", road: "台61線 西濱快速道路 [南北/東西向] (麥寮-台西區段)", speed: "85 km/h", level: "🟢 全線順暢", event: "🌬️ 沿海側風較強，大型車請注意安全", lat: 23.7821, lng: 120.1821 },
+
+            // 嘉義縣市
+            { county: "嘉義縣", road: "台82線 水上臥龍快速道路 [東西向] (太保-布袋區段)", speed: "88 km/h", level: "🟢 全線順暢", event: "往布袋商港與高鐵站方向車流正常", lat: 23.3882, lng: 120.1512 },
+            { county: "嘉義市", road: "世賢路地下道 / 忠孝路 幹道區段", speed: "50 km/h", level: "🟢 全線順暢", event: "市區主要幹道行車秩序良好", lat: 23.4812, lng: 120.4412 },
+
+            // 臺南市
+            { county: "臺南市", road: "國道8號 台南支線 [東西向] (台南端-新化系統區段)", speed: "85 km/h", level: "🟢 全線順暢", event: "銜接國道1號與國道3號交流道順暢", lat: 23.0612, lng: 120.2512 },
+            { county: "臺南市", road: "台86線 關廟快速道路 [東西向] (灣里-安平區段)", speed: "82 km/h", level: "🟢 全線順暢", event: "往安平港與黃金海岸車流正常", lat: 22.9282, lng: 120.1812 },
+            { county: "臺南市", road: "台84線 北門玉井快速道路 [東西向] (北門-麻豆區段)", speed: "85 km/h", level: "🟢 全線順暢", event: "東西向快速道路行車暢通", lat: 23.2382, lng: 120.2121 },
+
+            // 高雄市
+            { county: "高雄市", road: "國道10號 高雄支線 [東西向] (左營端-旗山區段)", speed: "80 km/h", level: "🟢 全線順暢", event: "左營端銜接國道1號鼎金系統正常", lat: 22.6812, lng: 120.3212 },
+            { county: "高雄市", road: "台88線 高雄潮州快速道路 [東西向] (鳳山-大寮區段)", speed: "62 km/h", level: "🟡 車流多", event: "高架段車流正常，請維持速限", lat: 22.6012, lng: 120.3812 },
+
+            // 屏東縣
+            { county: "屏東縣", road: "台26線 屏鵝公路 (楓港-車城區段)", speed: "70 km/h", level: "🟢 全線順暢", event: "往墾丁恆春方向車流順暢良好", lat: 22.1212, lng: 120.7102 },
+
+            // 宜蘭縣
+            { county: "宜蘭縣", road: "國道5號 蔣渭水高 [南北/東西向] (雪山隧道區段)", speed: "75 km/h", level: "🟢 隧道順暢", event: "隧道內雙向車速維持 70~80 km/h", lat: 24.8782, lng: 121.7882 },
+
+            // 花蓮縣
+            { county: "花蓮縣", road: "台9線 蘇花改 (中仁隧道區段)", speed: "40 km/h", level: "🚧 施工交管", event: "🚧 噴混凝土維護施工，實施單線放行", lat: 24.2382, lng: 121.7212 },
+
+            // 臺東縣
+            { county: "臺東縣", road: "台9線 南迴公路 (金崙高架橋區段)", speed: "65 km/h", level: "🟢 全線順暢", event: "景觀高架橋路段車流順暢", lat: 22.5282, lng: 120.9682 },
+
+            // 離島縣市
+            { county: "澎湖縣", road: "跨海大橋 (縣道203線區段)", speed: "50 km/h", level: "💨 陣風偏大", event: "💨 橋面陣風較大，機車請減速慢行", lat: 23.6482, lng: 119.5582 },
+            { county: "金門縣", road: "金門大橋 (金城至烈嶼區段)", speed: "60 km/h", level: "🟢 全線順暢", event: "全線行車正常，請遵守速限 60 km/h", lat: 24.4482, lng: 118.2782 },
+            { county: "連江縣", road: "南竿福澳港連外道路區段", speed: "30 km/h", level: "🟢 全線順暢", event: "陡坡路段行車請注意用檔", lat: 26.1582, lng: 119.9382 }
         ];
 
         const STATION_MAPPING = {
@@ -507,7 +543,7 @@
                 { locationId: "09007040", locationName: "連江縣東引鄉", weatherStation: "馬祖", lat: 26.3665, lng: 120.4835 },
                 { locationId: "09007020", locationName: "連江縣北竿鄉", weatherStation: "馬祖", lat: 26.2184, lng: 119.9982 },
                 { locationId: "09007010", locationName: "連江縣南竿鄉", weatherStation: "馬祖", lat: 26.1617, lng: 119.9428 },
-                { locationId: "09007030", locationName: "連江縣莒光鄉", weatherStation: "馬祖", lat: 25.9642, lng: 119.9600 }
+                { locationId: "09007030", locationName: "連江縣莒光鄉", weatherStation: "馬祖", lat: 25.9642, lng: 120.9600 }
             ]
         };
 
@@ -580,7 +616,7 @@
                 headerTitle.innerText = "🐟 封溪護魚與開放區段";
                 handleRiverCountyChange();
             } else if (pageId === 'trafficPage') {
-                headerTitle.innerText = "🚗 全台即時路況地圖";
+                headerTitle.innerText = "🚗 南北/東西向國道與快速道路路況";
                 handleTrafficCountyChange();
             }
         }
@@ -790,7 +826,7 @@
                 });
             } else {
                 const opt = document.createElement('option');
-                opt.innerText = "該縣市主要幹道全線車流順暢";
+                opt.innerText = "該縣市主要道路與國道區段全線順暢";
                 trafficEventSel.appendChild(opt);
             }
             renderTrafficDetail();
@@ -814,17 +850,17 @@
                         
                         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 grid grid-cols-2 gap-2 text-xs">
                             <div>
-                                <span class="text-slate-400 block font-bold">⏱️ 即時平均車速</span>
+                                <span class="text-slate-400 block font-bold">⏱️ 區段平均車速</span>
                                 <span class="text-slate-800 font-extrabold text-base mt-0.5 block">${item.speed || '75 km/h'}</span>
                             </div>
                             <div>
-                                <span class="text-slate-400 block font-bold">🚥 道路暢通等級</span>
+                                <span class="text-slate-400 block font-bold">🚥 區段暢通等級</span>
                                 <span class="text-sky-600 font-extrabold text-base mt-0.5 block">${item.level}</span>
                             </div>
                         </div>
 
                         <div class="pt-2 border-t border-slate-100">
-                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">⚠️ 道路事件與施工通報：</span>
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">⚠️ 該區段道路事件與施工通報：</span>
                             <p class="text-sm text-slate-700 font-semibold leading-relaxed">${item.event}</p>
                         </div>
                     </div>`;
@@ -861,7 +897,7 @@
                     setTimeout(() => trafficMapObj.invalidateSize(), 300);
                 }
             } else {
-                container.innerHTML = `<div class="bg-white p-4 rounded-2xl text-center text-slate-400 text-sm">🟢 ${selectedCounty} 主要幹道目前全線車流順暢，無特殊道路事故與施工事件。</div>`;
+                container.innerHTML = `<div class="bg-white p-4 rounded-2xl text-center text-slate-400 text-sm">🟢 ${selectedCounty} 國道與主要幹道目前全線車流順暢，無特殊道路事故與施工事件。</div>`;
             }
         }
 
