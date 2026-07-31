@@ -14,7 +14,14 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .map-container { height: 260px; width: 100%; border-radius: 1rem; z-index: 10; }
+        .map-container { height: 280px; width: 100%; border-radius: 1rem; z-index: 10; }
+        /* 藍色當前位置標記樣式 */
+        .user-location-marker {
+            background-color: #0284c7;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.6);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12 relative overflow-x-hidden">
@@ -100,7 +107,7 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">2. 選擇對應觀測點 (LocationName)</label>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">2. 選擇對應觀測點 (LOCATIONNAME)</label>
                 <select id="locationSelect" class="w-full bg-slate-100 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-base font-semibold">
                 </select>
             </div>
@@ -172,7 +179,7 @@
 
         </div>
 
-        <!-- 獨立跳轉頁面 1：海 - 開放釣點 (含地圖) -->
+        <!-- 獨立跳轉頁面 1：海 - 開放釣點 (含地圖與使用者位置標記) -->
         <div id="seaPage" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -191,13 +198,12 @@
                 </div>
             </div>
 
-            <!-- 地圖呈現區塊 -->
             <div id="seaMap" class="map-container shadow-sm border border-slate-200"></div>
 
             <div id="seaDetailContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 獨立跳轉頁面 2：溪 - 封溪護魚 (含地圖) -->
+        <!-- 獨立跳轉頁面 2：溪 - 封溪護魚 (含地圖與使用者位置標記) -->
         <div id="riverPage" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -216,7 +222,6 @@
                 </div>
             </div>
 
-            <!-- 地圖呈現區塊 -->
             <div id="riverMap" class="map-container shadow-sm border border-slate-200"></div>
 
             <div id="riverDetailContainer" class="space-y-3"></div>
@@ -231,8 +236,9 @@
         if ('caches' in window) { caches.keys().then(keys => { for (let k of keys) caches.delete(k); }); }
 
         let API_KEY = '';
-        let seaMapObj = null, seaMarker = null;
-        let riverMapObj = null, riverMarker = null;
+        let userCoords = null; // 儲存 GPS 全局座標
+        let seaMapObj = null, seaMarker = null, seaUserMarker = null;
+        let riverMapObj = null, riverMarker = null, riverUserMarker = null;
 
         // 封溪護魚資料集 (Json)[cite: 6]
         const RIVER_DATA = [
@@ -289,7 +295,7 @@
             "新北市": [
                 { locationId: "65000100", locationName: "新北市淡水區", weatherStation: "淡水", lat: 25.1915, lng: 121.4140 },
                 { locationId: "65000230", locationName: "新北市八里區", weatherStation: "淡水", lat: 25.1567, lng: 121.3717 },
-                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "林口", lat: 25.1354, lng: 121.3426 },
+                { locationId: "65000170", locationName: "新北市林口區", weatherStation: "板橋", lat: 25.1354, lng: 121.3426 },
                 { locationId: "65000120", locationName: "新北市瑞芳區", weatherStation: "鼻頭角", lat: 25.1307, lng: 121.8285 },
                 { locationId: "65000260", locationName: "新北市貢寮區", weatherStation: "福隆", lat: 25.0217, lng: 121.9500 },
                 { locationId: "65000280", locationName: "新北市萬里區", weatherStation: "金山", lat: 25.2111, lng: 121.6892 },
@@ -298,10 +304,10 @@
                 { locationId: "65000210", locationName: "新北市三芝區", weatherStation: "三芝", lat: 25.2559, lng: 121.4690 }
             ],
             "桃園市": [
-                { locationId: "68000050", locationName: "桃園市蘆竹區", weatherStation: "大園", lat: 25.1207, lng: 121.2801 },
-                { locationId: "68000060", locationName: "桃園市大園區", weatherStation: "大園", lat: 25.1181, lng: 121.2433 },
-                { locationId: "68000120", locationName: "桃園市觀音區", weatherStation: "大園", lat: 25.0669, lng: 121.0800 },
-                { locationId: "68000110", locationName: "桃園市新屋區", weatherStation: "新屋", lat: 24.9844, lng: 121.0046 }
+                { locationId: "68000050", locationName: "桃園市蘆竹區", weatherStation: "中壢", lat: 25.1207, lng: 121.2801 },
+                { locationId: "68000060", locationName: "桃園市大園區", weatherStation: "中壢", lat: 25.1181, lng: 121.2433 },
+                { locationId: "68000120", locationName: "桃園市觀音區", weatherStation: "中壢", lat: 25.0669, lng: 121.0800 },
+                { locationId: "68000110", locationName: "桃園市新屋區", weatherStation: "中壢", lat: 24.9844, lng: 121.0046 }
             ],
             "新竹市": [
                 { locationId: "10018020", locationName: "新竹市北區", weatherStation: "新竹", lat: 24.8486, lng: 120.9206 },
@@ -541,6 +547,7 @@
             renderSeaLocationDetail();
         }
 
+        // 核心優化：地圖同時呈現「開放釣點」與「您的當前位置」
         function renderSeaLocationDetail() {
             const selectedCounty = document.getElementById('seaCountySelect').value;
             const idx = document.getElementById('seaLocationSelect').value;
@@ -560,17 +567,38 @@
                         <p class="text-sm text-slate-600 font-medium">ℹ️ <strong>說明：</strong>${item.desc || '政府核可開放垂釣區域'}</p>
                     </div>`;
 
-                // 2. 嵌入 Leaflet 開放海釣地圖渲染[cite: 7]
                 if (item.lat && item.lng) {
                     if (!seaMapObj) {
-                        seaMapObj = L.map('seaMap').setView([item.lat, item.lng], 13);
+                        seaMapObj = L.map('seaMap').setView([item.lat, item.lng], 12);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(seaMapObj);
-                        seaMarker = L.marker([item.lat, item.lng]).addTo(seaMapObj);
+                    }
+                    
+                    // 釣點 Marker
+                    if (seaMarker) seaMapObj.removeLayer(seaMarker);
+                    seaMarker = L.marker([item.lat, item.lng]).addTo(seaMapObj);
+                    seaMarker.bindPopup(`<b>${item.name}</b><br>${item.kind}`).openPopup();
+
+                    let bounds = [ [item.lat, item.lng] ];
+
+                    // 若已取得使用者 GPS 座標，在地圖上繪製「您的位置」藍色圓點
+                    if (userCoords) {
+                        if (seaUserMarker) seaMapObj.removeLayer(seaUserMarker);
+                        const userIcon = L.divIcon({
+                            className: 'user-location-marker',
+                            iconSize: [16, 16]
+                        });
+                        seaUserMarker = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon }).addTo(seaMapObj);
+                        seaUserMarker.bindPopup(`<b>📍 您目前的位置</b>`);
+                        bounds.push([userCoords.lat, userCoords.lng]);
+                    }
+
+                    // 自動縮放地圖，將「您的位置」與「釣點」同時包進視角
+                    if (bounds.length > 1) {
+                        seaMapObj.fitBounds(bounds, { padding: [40, 40] });
                     } else {
                         seaMapObj.setView([item.lat, item.lng], 13);
-                        seaMarker.setLatLng([item.lat, item.lng]);
                     }
-                    seaMarker.bindPopup(`<b>${item.name}</b><br>${item.kind}`).openPopup();
+
                     setTimeout(() => seaMapObj.invalidateSize(), 300);
                 }
             }
@@ -591,6 +619,7 @@
             renderRiverLocationDetail();
         }
 
+        // 核心優化：地圖同時呈現「封溪護魚地點」與「您的當前位置」
         function renderRiverLocationDetail() {
             const selectedCounty = document.getElementById('riverCountySelect').value;
             const idx = document.getElementById('riverLocationSelect').value;
@@ -613,23 +642,43 @@
                         </div>
                     </div>`;
 
-                // 2. 嵌入 Leaflet 封溪護魚地圖渲染[cite: 6]
                 if (item.lat && item.lng) {
                     if (!riverMapObj) {
                         riverMapObj = L.map('riverMap').setView([item.lat, item.lng], 12);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(riverMapObj);
-                        riverMarker = L.marker([item.lat, item.lng]).addTo(riverMapObj);
+                    }
+
+                    // 封溪護魚 Marker
+                    if (riverMarker) riverMapObj.removeLayer(riverMarker);
+                    riverMarker = L.marker([item.lat, item.lng]).addTo(riverMapObj);
+                    riverMarker.bindPopup(`<b>🚫 封溪護魚：${item.溪流名稱}</b>`).openPopup();
+
+                    let bounds = [ [item.lat, item.lng] ];
+
+                    // 若已取得使用者 GPS 座標，在地圖上繪製「您的位置」藍色圓點
+                    if (userCoords) {
+                        if (riverUserMarker) riverMapObj.removeLayer(riverUserMarker);
+                        const userIcon = L.divIcon({
+                            className: 'user-location-marker',
+                            iconSize: [16, 16]
+                        });
+                        riverUserMarker = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon }).addTo(riverMapObj);
+                        riverUserMarker.bindPopup(`<b>📍 您目前的位置</b>`);
+                        bounds.push([userCoords.lat, userCoords.lng]);
+                    }
+
+                    // 自動縮放地圖，將「您的位置」與「封溪地點」同時包進視角
+                    if (bounds.length > 1) {
+                        riverMapObj.fitBounds(bounds, { padding: [40, 40] });
                     } else {
                         riverMapObj.setView([item.lat, item.lng], 12);
-                        riverMarker.setLatLng([item.lat, item.lng]);
                     }
-                    riverMarker.bindPopup(`<b>🚫 封溪護魚：${item.溪流名稱}</b>`).openPopup();
+
                     setTimeout(() => riverMapObj.invalidateSize(), 300);
                 }
             }
         }
 
-        // --- 主頁氣象核心 ---
         async function fetchWeatherBaseData() {
             try {
                 const weatherRes = await fetch(`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}`);
@@ -657,7 +706,7 @@
             runGPSLocation();
         }
 
-        // 3. 修復 GPS 板橋抓成台北的排查，改用純歐幾里得距離演算法，無死角匹配
+        // GPS 定位優化：記錄使用者座標供海/溪地圖呈現
         function runGPSLocation() {
             if (!navigator.geolocation) { toggleSearchPage(); return; }
             headerTitle.innerText = '📍 定位中...';
@@ -666,6 +715,10 @@
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
+                    
+                    // 記錄使用者 GPS 座標
+                    userCoords = { lat: userLat, lng: userLng };
+
                     let closestCounty = "基隆市";
                     let closestLoc = null;
                     let minDistance = Infinity;
@@ -716,12 +769,27 @@
             updateMainContent(countySelect.value, selectedOpt.dataset.weatherStation, selectedOpt.value, selectedOpt.dataset.locationId);
         }
 
+        function isValidValue(val) {
+            if (val === undefined || val === null) return false;
+            const num = parseFloat(val);
+            return !isNaN(num) && num !== -99 && num !== -99.0;
+        }
+
         async function updateMainContent(countyName, weatherStationName, tideLocationName, locationId) {
             if (rawWeatherData) {
-                let matchedWeather = rawWeatherData.find(st => st.StationName === weatherStationName && st.GeoInfo && st.GeoInfo.CountyName === countyName);
+                let matchedWeather = rawWeatherData.find(st => 
+                    st.StationName === weatherStationName && 
+                    st.GeoInfo && st.GeoInfo.CountyName === countyName && 
+                    st.WeatherElement && isValidValue(st.WeatherElement.AirTemperature)
+                );
+                
                 if (!matchedWeather) {
-                    matchedWeather = rawWeatherData.find(st => st.GeoInfo && st.GeoInfo.CountyName === countyName && st.WeatherElement && st.WeatherElement.AirTemperature !== -99);
+                    matchedWeather = rawWeatherData.find(st => 
+                        st.GeoInfo && st.GeoInfo.CountyName === countyName && 
+                        st.WeatherElement && isValidValue(st.WeatherElement.AirTemperature)
+                    );
                 }
+                
                 if (matchedWeather) renderWeather(countyName, matchedWeather);
             }
             fetchAlertHazards(countyName);
@@ -795,7 +863,7 @@
 
                         items.forEach(it => {
                             const valNum = parseFloat(it.val);
-                            const displayVal = (valNum < 0 || isNaN(valNum)) ? '0.0' : valNum.toFixed(1);
+                            const displayVal = (!isValidValue(it.val) || valNum < 0) ? '0.0' : valNum.toFixed(1);
                             const block = document.createElement('div');
                             block.className = 'bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col items-center';
                             block.innerHTML = `
@@ -853,11 +921,11 @@
             const windSpeedVal = parseFloat(station.WeatherElement.WindSpeed);
             const humidityVal = parseFloat(station.WeatherElement.RelativeHumidity);
 
-            document.getElementById('temp').innerText = isNaN(tempVal) ? '--' : tempVal;
-            document.getElementById('windSpeed').innerText = isNaN(windSpeedVal) ? '-- m/s' : `${windSpeedVal} m/s`;
-            document.getElementById('humidity').innerText = isNaN(humidityVal) ? '-- %' : `${humidityVal} %`;
+            document.getElementById('temp').innerText = isValidValue(tempVal) ? tempVal : '--';
+            document.getElementById('windSpeed').innerText = isValidValue(windSpeedVal) ? `${windSpeedVal} m/s` : '-- m/s';
+            document.getElementById('humidity').innerText = isValidValue(humidityVal) ? `${humidityVal} %` : '-- %';
 
-            if (!isNaN(tempVal) && !isNaN(humidityVal) && !isNaN(windSpeedVal)) {
+            if (isValidValue(tempVal) && isValidValue(humidityVal) && isValidValue(windSpeedVal)) {
                 const e = (humidityVal / 100) * 6.105 * Math.exp((17.27 * tempVal) / (237.7 + tempVal));
                 const apparentTemp = 1.07 * tempVal + 0.2 * e - 0.65 * windSpeedVal - 2.7;
                 document.getElementById('apparentTemp').innerText = `${apparentTemp.toFixed(1)} °C`;
@@ -868,9 +936,9 @@
             let windDirRaw = station.WeatherElement.WindDirection;
             let displayWindText = "";
 
-            if (typeof windDirRaw === 'number' || (!isNaN(parseFloat(windDirRaw)) && isFinite(windDirRaw))) {
+            if (isValidValue(windDirRaw)) {
                 displayWindText = getWindDirectionText(parseFloat(windDirRaw));
-            } else if (typeof windDirRaw === 'string') {
+            } else if (typeof windDirRaw === 'string' && windDirRaw !== "-99") {
                 displayWindText = windDirRaw;
             } else { displayWindText = '微風'; }
 
@@ -924,11 +992,10 @@
                 iconEl.innerText = '🌙';
             } else {
                 let tempVal = parseFloat(station.WeatherElement.AirTemperature);
-                iconEl.innerText = (tempVal > 30) ? '☀️' : '⛅';
+                iconEl.innerText = (isValidValue(tempVal) && tempVal > 30) ? '☀️' : '⛅';
             }
         }
 
-        // 1. 核心潮汐呈現重構：依照時間由早到晚 (00:00 ~ 23:59) 時間軸排序
         function renderTide(periods) {
             const container = document.getElementById('tideContainer');
             container.innerHTML = '';
@@ -948,10 +1015,8 @@
                     });
                 });
 
-                // 按 24 小時時間進行早到晚排序
                 allTideEvents.sort((a, b) => a.time.localeCompare(b.time));
 
-                // 產生簡潔好看的時間軸卡片
                 let eventsHtml = allTideEvents.map(e => `
                     <div class="flex items-center justify-between p-2.5 rounded-xl ${e.type === '滿潮' ? 'bg-red-50/70 border border-red-100' : 'bg-blue-50/70 border border-blue-100'}">
                         <div class="flex items-center gap-2 font-bold text-sm">
